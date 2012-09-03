@@ -1,0 +1,11 @@
+The loglite library is a simple header only C++ template library for logging in C++.
+This library was written in a few hours to basically show that C++ has no real need for
+bloated logging libraries like some existing Log4J clones out there as a result of the 
+very usefull std::streambuf baseclass. While this library was meant only to demonstrate
+the power of using std::streambuf, that makes it almost trivial to write your own logger
+in a few hours. I took care to add some generics in order to make this library usable for
+a more general public. Thread safety is optional and there is currently only a raw logger
+for logging to syslog. Next to this, the library uses pthread mutexes. pthread and syslog
+currently make this library POSIX only, so no MS-Windows portability (yet).
+Please feel free to re-use the code in this library for building a more complete logging 
+library.
