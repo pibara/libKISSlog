@@ -27,7 +27,7 @@
 #define LOG_LITE_HPP
 #include <syslog.h>
 #include <string.h>
-#include "pthread.h"
+#include <mutex>
 #include <string>
 #include <streambuf>
 #include <iostream>
@@ -91,16 +91,15 @@ namespace loglite {
     struct SINGLE{};
     struct MULTI{};
     class guard {
-        static pthread_mutex_t mGlobalMutex; 
+        static std::mutex mGlobalMutex; 
       public:
         guard() {
-          pthread_mutex_lock(&mGlobalMutex);
+          mGlobalMutex.lock();
         }
         ~guard() {
-          pthread_mutex_unlock(&mGlobalMutex);
+          mGlobalMutex.unlock();
         }       
     };
-    pthread_mutex_t guard::mGlobalMutex= PTHREAD_MUTEX_INITIALIZER;
     template <typename T>
     class guard_if_needed {};
     template <>

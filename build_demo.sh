@@ -1,2 +1,2 @@
 #!/bin/sh
-g++ -I. -O3 demo.cpp -o demo
+g++ -I. -O3 demo.cpp -std=c++0x -o demo
