@@ -25,9 +25,21 @@
 
 #ifndef LOG_LITE_HPP
 #define LOG_LITE_HPP
+#ifndef WIN32
 #include <syslog.h>
-#include <string.h>
+#endif
+
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
 #include <mutex>
+#else
+#ifndef WIN32
+#include <pthread.h>
+#else 
+#error "On windows you need to compile as C++11 for loglite to compile"
+#endif
+#endif
+
+#include <string.h>
 #include <string>
 #include <streambuf>
 #include <iostream>
@@ -90,6 +102,7 @@ namespace loglite {
   namespace threading {
     struct SINGLE{};
     struct MULTI{};
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
     class guard {
         static std::mutex mGlobalMutex; 
       public:
@@ -100,6 +113,22 @@ namespace loglite {
           mGlobalMutex.unlock();
         }       
     };
+#else
+#ifndef WIN32
+    class guard {
+        static pthread_mutex_t mGlobalMutex; 
+      public:
+        guard() {
+          pthread_mutex_lock(&mGlobalMutex);
+        }
+        ~guard() {
+          pthread_mutex_unlock(&mGlobalMutex);
+        }       
+    };
+#else
+#error "On windows you need to compile as C++11 for loglite to compile" 
+#endif
+#endif
     template <typename T>
     class guard_if_needed {};
     template <>
@@ -200,6 +229,7 @@ namespace loglite {
   }
   //Some raw loggers, well one actually, currently.There is only a syslog raw logger now but we could add a stream logger here maybe.
   namespace rawlogger {
+#ifndef WIN32
     template <typename F,typename G>
     class sysloglogger {
         std::string mIdent;
@@ -219,6 +249,7 @@ namespace loglite {
            };
         }
     };
+#endif
   }
   //A simple streambuf for any raw logger. Makes  things line oriented and cuts of lines at
   //some maximum length.
