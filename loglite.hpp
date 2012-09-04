@@ -43,6 +43,8 @@
 #include <string>
 #include <streambuf>
 #include <iostream>
+#include <ctime>
+
 namespace loglite {
   //An list of syslog facilities as simple classes. Note that these are not all possible
   //facilities, just the one a typical user space program will be using.
@@ -224,6 +226,20 @@ namespace loglite {
         }
     };
 #endif
+    template <typename F,typename G>
+    class ostreamlogger {
+        std::ostream &mStream;
+      public:
+        ostreamlogger(std::ostream &stream):mStream(stream) {}
+        template <typename T,typename R>
+        void log(std::string line) {
+           threading::guard_if_needed<G> myguard;
+           time_t ctt = time(0);
+           std::string timestring=asctime(localtime(&ctt));
+           timestring=timestring.substr(0,timestring.size()-1);
+           mStream << timestring << " : " << line;
+        }
+    };
   }
   class nullstreambuf : public std::streambuf {
       public:
