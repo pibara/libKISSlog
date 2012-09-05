@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>LibKISSlog by pibara</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>LibKISSlog</h1>
+          <h2>A trivial but powerful C++ logging template-library. </h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/pibara/libKISSlog/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/pibara/libKISSlog/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/pibara/libKISSlog" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <h3>The KISS Logging template-library for C++</h3>
+
+<p>LibKISSlog is a trivial light-weight C++ template library that was designed and written according to the KISS ( Keep It Simple &amp; Straightforward) principle. The library leans heavily on the STL for keeping its implementation as simple as its usage, and tries to provide C++ developers with a light-weight, paradigm-pure and flexible alternative to logging libraries that use design and/or implementation decisions that at least the author of LibKISSlog believes to be questionable. Its easiest to explain why LibKISSlog would be suitable for your needs by listing the things that LibKISSlog does <em>NOT</em> choose to use or do: </p>
+
+<ul>
+<li>Uses no singletons or other forms of mutable global state.</li>
+<li>Uses no macro's</li>
+<li>Doesn't try to fit the Java run-time everything model onto a C++ library.</li>
+<li>Doesn't try to be a Java style (bloated) framework.</li>
+<li>Doesn't make the choice for you whether you need thread safety.</li>
+<li>Does not compromise on simplicity in order to facilitate questionable inner-loop logging practices.</li>
+</ul><h3>Writing your own raw logger.</h3>
+
+<p>The first thing you will want to do when using LibKISSlog is determine if you ont to use one of the two packaged raw loggers, or if you want to provide your own. Lets first assume you want full control and want to do things the harder (yet still simple) way, and want to build your own raw logger in order to fully control the output of your logger. </p>
+
+<p>A raw logger can either be a normal class or a template class that implements a <em>log</em> template method. LibKISSlog defines a set of log level classes that are to be used by libKISSlog as template parameters for the <em>log</em> method of the raw logger. These classes have two class methods that you may choose to use when writing your own raw logger:</p>
+
+<ul>
+<li>
+<em>asPrefix()</em> : This class method returns a string containing the name of the log level.</li>
+<li>
+<em>asSyslogLevel()</em> : This class method returns an integer representing the log level as a syslog API compatible integer representation. </li>
+</ul><p>Here would be an example of a dumb and useless raw logger that logs to cerr with a line number prepended:</p>
+
+<pre><code>class myrawlogger {
+       size_t mLineno;
+   public:
+       myrawlogger():mLineNo(0){}
+       template &lt;typename T&gt;
+       void log(std::string line) {
+          mLineno++;
+          std::cerr &lt;&lt; mLineNo &lt;&lt; ":" &lt;&lt; T::asPrefix() &lt;&lt; line;
+       }
+};
+</code></pre>
+
+<p>Note that if you write a raw logger that you want to re-use in several projects, especially if you are using thread-unsafe API calls and want to be able to re-use your custom raw logger in both single threaded and multi threaded application, it is sugested that you implement your raw logger as a template class basically like this:</p>
+
+<pre><code>template &lt;typename G&gt;
+class base_myrawlogger {
+       size_t mLineno;
+   public:
+       base_myrawlogger():mLineNo(0){}
+       template &lt;typename T&gt;
+       void log(std::string line) {
+          threading::guard_if_needed&lt;G&gt; myguard;
+          mLineno++;
+          std::cerr &lt;&lt; mLineNo &lt;&lt; ":" &lt;&lt; T::asPrefix() &lt;&lt; line;
+       }
+};
+</code></pre>
+
+<p>Now before you instantiate your logger its a good idea to create a typedef approprite for your program. If you are working on a single threaded program you would say:</p>
+
+<pre><code>typedef base_myrawlogger&lt;kisslog::threading::SINGLE&gt; myrawlogger;
+</code></pre>
+
+<p>While in a multi-threaded project you would use:</p>
+
+<pre><code>typedef base_myrawlogger&lt;kisslog::threading::MULTI&gt; myrawlogger;
+</code></pre>
+
+<p>The idea behind this is that when you don't <em>need</em> thread-safety, than you don't pay any performance penalty for it either.</p>
+
+<h3>Using the syslog raw logger</h3>
+
+<p>While the flexibility of writing your own raw logging is great, often you will just want to get the show on the road quickly and you would thus like to settle for one of the two raw loggers that come with libKISSlog. The first of these is <em>kisslog::rawlogger::sysloglogger</em>. Just as we did with our own raw logger, you will want to create an appropriate typedef for your raw logger. Note that the sysloglogger raw logger template takes an additional template parameter: the <em>facility</em>. LibKISSlog defines a set of parameter classes for picking the facility that is a subset of the facilities defined by syslog. So basically next to picking single or multi threading, the typedef also picks the facility you will be using. An example typedef could be:</p>
+
+<pre><code>typedef kisslog::rawlogger::sysloglogger&lt;
+          kisslog::facility::USER,
+          kisslog::threading::SINGLE
+        &gt; syslograwlogger;
+</code></pre>
+
+<p>This typedef defines the type syslograwlogger to be a raw non thread-safe syslog logger that logs to the <em>USER</em> syslog facility.</p>
+
+<h3>Using the ostream raw logger</h3>
+
+<p>While on most systems that support syslog you will probably want to use the syslog logger in production, on Windows systems and on your development environment its likely you will often want to log to either a file or the standard output or error stream. To facilitate this, libKISSlog defines a simple raw logger for logging to a wrapped ostream. Like our example and like the syslog raw logger, the <em>kisslog::rawlogger::ostreamlogger</em> raw logger takes a threading related template parameter. Again we will thus want to use a typedef to define the apropriate type for our raw logger for our project.</p>
+
+<pre><code>typedef kisslog::rawlogger::ostreamlogger&lt;
+          kisslog::threading::SINGLE
+        &gt; ostreamrawlogger;
+</code></pre>
+
+<h3>Typedeffing our real logger</h3>
+
+<p>So far all we've basically done is defining a type for a raw logger that should be used by our actual logger. Before we can instantiate our raw logger and use it to instantiate a real logger, there remains one thing to do. We need to also typedef a shorthand type for our actual logger.
+The <em>kisslog::logger</em> class template takes two template arguments. The first template argument is the type of the raw logger we just defined. The second template argument is the <em>minimal</em> log level for this logger for what log lines will actually get logged. This last template parameter basically implies that you can switch between doing fully verbose debug logging and logging that only does WARNING and above by changing a typedef. A real logger typedef may look something like:</p>
+
+<pre><code>typedef kisslog::logger&lt;
+          myrawlogger,
+          kisslog::severity::WARNING
+        &gt; mywarnlogger;
+</code></pre>
+
+<h3>Instantiating and using the loggers</h3>
+
+<p>Now that we have our typedefs in order (myrawlogger and warnlogger), we can instantiate our logger and use it.</p>
+
+<pre><code>myrawlogger rawlogger;
+mywarnlogger warnlogger(rawlogger);
+..
+warnlogger.err() &lt;&lt; "Logging is simple " &lt;&lt; 42 &lt;&lt; std::endl;
+warnlogger.debug() &lt;&lt; "This line won't be logged." &lt;&lt; std::endl;
+</code></pre>
+
+<p>The logger defines a small set of methods, one for each log level, that all return an ostream reference.
+Given our typedef for mywarnlogger defining <em>kisslog::severity::WARNING</em> as minimal level for logging, the warnlogger.err() method will return a stream reference that maps to our raw logger being invoked, while the warnlogger.debug() invocation will return a null stream.</p>
+
+<h3>Word of caution regarding debug logging and performance.</h3>
+
+<p>Please note that while our logger will return null streams that are relatively efficient, the sheer volume of debug logs might turn many operator&lt;&lt;() invocations done in inner loops into a major performance bottleneck. Addressing these issues is beyond the scope of libKISSlog or any other logging library that chooses to use a streaming interface. It is thus sugested that you should probably :</p>
+
+<ul>
+<li>Use old and ugly #ifdef constructs for debug logs in inner loops.</li>
+<li>Never use logs above the debug level in your inner loops.</li>
+</ul><p>Logging code in inner loops should thus look something like this: </p>
+
+<pre><code>   #ifdef DEBUG_INNER_LOOPS
+     debuglogger.debug() &lt;&lt; "Log in performance critical inner loops."
+   #endif
+</code></pre>
+
+<h3>Passing loggers around</h3>
+
+<p>The libKISSlog API does out of principle not supply any singleton interface and does not use any kind of global mutable state under the hood. Instead, libKISSlog promotes the use of constructor based dependency injection. To accomodate this, any concrete kisslog::logger class is a subclass of the abstract <em>kisslog::logger_base</em> class. This basically allows for constructs like:</p>
+
+<pre><code>class Foo {
+    kisslog::logger_base &amp;mLogger;
+  public:
+    Foo(kisslog::logger_base &amp;logger):mLogger(logger) {}
+    void testlog() {
+        mLogger.debug() &lt;&lt; "Foo has something uninteresting to say" &lt;&lt; std::endl;
+        mLogger.crit() &lt;&lt; "Foo is in big problems." &lt;&lt; std::endl;
+    }
+};
+..
+Foo foo(warnlogger);
+..
+foo.testlog();
+</code></pre>
+
+<p>Note that Foo does not need to know what type of logger its being passed here. This also, next to making dependencies more explicit (what is good), allows for flexibility in what level of logging is used by what sub systems without using bloated Log4J style frameworks, simply by passing different loggers (with different minimum log levels) to the constructors of the different sub-systems:</p>
+
+<pre><code>Foo foo(warnlogger);
+Bar bar(debuglogger);
+..
+foo.testlog();
+bar.testlog();
+</code></pre>
+
+<p>In the above situation, foo will not log any DEBUG, INFO or NOTICE level log lines, while bar will.</p>
+
+<h3>Known issues</h3>
+
+<p>The following issues are currently known with libKISSlog, some may be fixed later.</p>
+
+<ul>
+<li>Compiling and using libKISSlog on the windows platform is currently completely unvalidated and completely untested. It may compile and run, it may compile and not run, or it may not even compile. </li>
+<li>What is currently sure about windows is that the raw syslog logger isn't available, and that only compiling for C++11 might possibly work (no C++03 as a result of missing mutex code for non pthread systems).</li>
+<li>There is currently no support for using wchar as basis. </li>
+</ul><p>As you can see, all issues today have to do with windows portability. The author currently has no access to a Windows development environment with C++11 support that is needed to develop and test on that platform. If any windows C++ developer would like to help out, please fork the project on github and drop me a pull request if you have anything that would help in portability to windows.</p>
+        </section>
+
+        <footer>
+          LibKISSlog is maintained by <a href="https://github.com/pibara">pibara</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
