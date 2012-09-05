@@ -219,25 +219,25 @@ namespace kisslog {
            closelog();
         }
 
-        template <typename T,typename R>
+        template <typename T>
         void log(std::string line) {
            threading::guard_if_needed<G> myguard;
-           syslog(T::asSyslogLevel(),"%s",line.c_str());
+           syslog(T::asSyslogLevel(),"%s",(T::asPrefix() + " : " + line).c_str());
         }
     };
 #endif
-    template <typename F,typename G>
+    template <typename G>
     class ostreamlogger {
         std::ostream &mStream;
       public:
         ostreamlogger(std::ostream &stream):mStream(stream) {}
-        template <typename T,typename R>
+        template <typename T>
         void log(std::string line) {
            threading::guard_if_needed<G> myguard;
            time_t ctt = time(0);
            std::string timestring=asctime(localtime(&ctt));
            timestring=timestring.substr(0,timestring.size()-1);
-           mStream << timestring << " : " << line;
+           mStream << timestring << " : " << T::asPrefix() << " : " << line;
         }
     };
   }
@@ -267,7 +267,7 @@ namespace kisslog {
         }
         if ((c == '\n') || (index == 255) || (c == std::char_traits<char>::eof())) {
           data[index]=0;
-          mLogger.template log<S,R>((std::string(S::asPrefix()) + " : " + data).c_str());
+          mLogger.template log<S>(std::string(data));
           index=0;
         }
         if (c != std::char_traits<char>::eof()) return 0;
