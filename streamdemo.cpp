@@ -1,9 +1,9 @@
-#include <loglite.hpp>
+#include <kisslog.hpp>
 
 class Foo {
-    loglite::logger_base &mLogger;
+    kisslog::logger_base &mLogger;
   public:
-    Foo(loglite::logger_base &logger):mLogger(logger) {}
+    Foo(kisslog::logger_base &logger):mLogger(logger) {}
     void testlog() {
         mLogger.debug() << "Foo is debug logging" << std::endl;
         mLogger.notice() << "Foo wants you to notice" << std::endl;
@@ -12,9 +12,9 @@ class Foo {
 };
 
 class Bar {
-    loglite::logger_base &mLogger;
+    kisslog::logger_base &mLogger;
   public:
-    Bar(loglite::logger_base &logger):mLogger(logger) {}
+    Bar(kisslog::logger_base &logger):mLogger(logger) {}
     void testlog() {
         mLogger.debug() << "Bar is debug logging" << std::endl;
         mLogger.notice() << "Bar wants you to notice" << std::endl;
@@ -22,9 +22,9 @@ class Bar {
     }
 };
 
-typedef loglite::rawlogger::ostreamlogger<loglite::facility::USER,loglite::threading::SINGLE> ostreamrawlogger;
-typedef loglite::logger<ostreamrawlogger,loglite::severity::WARNING> warnlogger;
-typedef loglite::logger<ostreamrawlogger,loglite::severity::DEBUG> debuglogger;
+typedef kisslog::rawlogger::ostreamlogger<kisslog::facility::USER,kisslog::threading::SINGLE> ostreamrawlogger;
+typedef kisslog::logger<ostreamrawlogger,kisslog::severity::WARNING> warnlogger;
+typedef kisslog::logger<ostreamrawlogger,kisslog::severity::DEBUG> debuglogger;
 
 int main(int argc,char **argv) {
   ostreamrawlogger rlogger(std::cerr);

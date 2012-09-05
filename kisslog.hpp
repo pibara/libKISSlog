@@ -23,8 +23,8 @@
 //ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //DEALINGS IN THE SOFTWARE.
 
-#ifndef LOG_LITE_HPP
-#define LOG_LITE_HPP
+#ifndef KISSLOG_HPP
+#define KISSLOG_HPP
 #ifndef WIN32
 #include <syslog.h>
 #endif
@@ -35,7 +35,7 @@
 #ifndef WIN32
 #include <pthread.h>
 #else 
-#error "On windows you need to compile as C++11 for loglite to compile"
+#error "On windows you need to compile as C++11 for KISSlog to compile"
 #endif
 #endif
 
@@ -45,7 +45,7 @@
 #include <iostream>
 #include <ctime>
 
-namespace loglite {
+namespace kisslog {
   //An list of syslog facilities as simple classes. Note that these are not all possible
   //facilities, just the one a typical user space program will be using.
   namespace facility {
@@ -128,7 +128,7 @@ namespace loglite {
         }       
     };
 #else
-#error "On windows you need to compile as C++11 for loglite to compile" 
+#error "On windows you need to compile as C++11 for KISSlog to compile" 
 #endif
 #endif
     template <typename T>
