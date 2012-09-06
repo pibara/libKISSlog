@@ -13,4 +13,4 @@ Currently this library status is as follows:
 * MS-Windows + C++98: Not currently supported.
 * MS-Windows + C++11: Should work in theory. Untested. Uses std::mutex and does not supports syslog
 
-Any help on getting stuff tested and/or fixed for the MS-Windows 
+Any help on getting stuff tested and/or fixed for the MS-Windows would be extremely appreciated.
