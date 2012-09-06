@@ -21,12 +21,16 @@ class Bar {
         mLogger.crit() << "Bar is in big problems." << std::endl;
     }
 };
-
+#ifndef WIN32
 typedef kisslog::rawlogger::sysloglogger<kisslog::facility::USER,kisslog::threading::SINGLE> syslograwlogger;
 typedef kisslog::logger<syslograwlogger,kisslog::severity::WARNING> warnlogger;
 typedef kisslog::logger<syslograwlogger,kisslog::severity::DEBUG> debuglogger;
+#else
+#error Logging to syslog is not supported on the win32 platform.
+#endif
 
 int main(int argc,char **argv) {
+#ifndef WIN32
   syslograwlogger rlogger("demo");
   warnlogger foologger(rlogger);
   debuglogger barlogger(rlogger);
@@ -34,4 +38,5 @@ int main(int argc,char **argv) {
   Bar bar(barlogger);
   foo.testlog();
   bar.testlog();
+#endif
 };

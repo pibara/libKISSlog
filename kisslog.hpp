@@ -48,6 +48,7 @@
 namespace kisslog {
   //An list of syslog facilities as simple classes. Note that these are not all possible
   //facilities, just the one a typical user space program will be using.
+#ifndef WIN32
   namespace facility {
     struct DAEMON {
       static int asSyslogFacility() {
@@ -100,6 +101,7 @@ namespace kisslog {
       }
     }; 
   }
+#endif
   //Some helper classes for allowing multi threading (in a crude way) only when needed.
   namespace threading {
     struct SINGLE{};
@@ -141,65 +143,81 @@ namespace kisslog {
   //A list of log levels as simple classes.
   namespace severity {
     struct DEBUG {
+#ifndef WIN32
        static int asSyslogLevel() {
          return LOG_DEBUG;
        }
+#endif
        static std::string asPrefix() {
           return "DEBUG";
        }
     };
     struct INFO {
+#ifndef WIN32
        static int asSyslogLevel() {
          return LOG_INFO;
        }
+#endif
        static std::string asPrefix() {
           return "INFO";
        }
     };
     struct NOTICE {
+#ifndef WIN32
        static int asSyslogLevel() {
          return LOG_NOTICE;
        }
+#endif
        static std::string asPrefix() {
           return "NOTICE";
        }
     };
     struct WARNING {
+#ifndef WIN32
        static int asSyslogLevel() {
          return LOG_WARNING;
        }
+#endif
        static std::string asPrefix() {
           return "WARNING";
        }
     };
     struct ERR {
+#ifndef WIN32
        static int asSyslogLevel() {
          return LOG_ERR;
        }
+#endif
        static std::string asPrefix() {
           return "ERR";
        }
     };
     struct CRIT {
+#ifndef WIN32
        static int asSyslogLevel() {
          return LOG_CRIT;
        }
+#endif
        static std::string asPrefix() {
           return "CRIT";
        }
     };
     struct ALERT {
+#ifndef WIN32
        static int asSyslogLevel() {
          return LOG_ALERT;
        }
+#endif
        static std::string asPrefix() {
           return "ALERT";
        }
     };
     struct EMERG {
+#ifndef WIN32
        static int asSyslogLevel() {
          return LOG_EMERG;
        }
+#endif
        static std::string asPrefix() {
           return "EMERG";
        }
