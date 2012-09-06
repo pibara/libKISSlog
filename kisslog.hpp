@@ -35,7 +35,7 @@
 #ifndef WIN32
 #include <pthread.h>
 #else 
-#error "On windows you need to compile as C++11 for KISSlog to compile"
+#include <windows.h>
 #endif
 #endif
 
@@ -130,7 +130,36 @@ namespace kisslog {
         }       
     };
 #else
-#error "On windows you need to compile as C++11 for KISSlog to compile" 
+   //Piece of Win32 code contributed by Torsten Schröder
+   namespace detail
+   {
+     class init_guard {
+        static CRITICAL_SECTION mGlobalMutex; 
+       public:
+        init_guard() {
+          InitializeCriticalSection(&mGlobalMutex);
+        }
+        ~init_guard() {
+          DeleteCriticalSection(&mGlobalMutex);
+        }       
+        CRITICAL_SECTION * operator()() { 
+          return &mGlobalMutex; 
+        }
+        const CRITICAL_SECTION * operator()() const { 
+          return &mGlobalMutex; 
+        }
+     };
+  } 
+  class guard {
+      static detail::init_guard mGlobalMutex; 
+    public:
+      guard() {
+        EnterCriticalSection(mGlobalMutex());
+      }
+      ~guard() {
+        LeaveCriticalSection(mGlobalMutex());
+      }       
+  };
 #endif
 #endif
     template <typename T>

@@ -1,0 +1,1 @@
+Torsten Schröder: Provided mutex code that should allow things to build and work on MS-Windows even without C++11.
