@@ -185,15 +185,6 @@ bar.testlog();
 
 <p>In the above situation, foo will not log any DEBUG, INFO or NOTICE level log lines, while bar will.</p>
 
-<h3>Known issues</h3>
-
-<p>The following issues are currently known with libKISSlog, some may be fixed later.</p>
-
-<ul>
-<li>Compiling and using libKISSlog on the windows platform is currently completely unvalidated and completely untested. It may compile and run, it may compile and not run, or it may not even compile. </li>
-<li>What is currently sure about windows is that the raw syslog logger isn't available, and that only compiling for C++11 might possibly work (no C++03 as a result of missing mutex code for non pthread systems).</li>
-<li>There is currently no support for using wchar as basis. </li>
-</ul><p>As you can see, all issues today have to do with windows portability. The author currently has no access to a Windows development environment with C++11 support that is needed to develop and test on that platform. If any windows C++ developer would like to help out, please fork the project on github and drop me a pull request if you have anything that would help in portability to windows.</p>
         </section>
 
         <footer>
