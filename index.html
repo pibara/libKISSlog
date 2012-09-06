@@ -42,7 +42,9 @@
 <li>Doesn't try to be a Java style (bloated) framework.</li>
 <li>Doesn't make the choice for you whether you need thread safety.</li>
 <li>Does not compromise on simplicity in order to facilitate questionable inner-loop logging practices.</li>
-</ul><h3>Writing your own raw logger.</h3>
+</ul>
+<h2>Using libKISSlog</h2>
+<h3>Writing your own raw logger.</h3>
 
 <p>The first thing you will want to do when using LibKISSlog is determine if you ont to use one of the two packaged raw loggers, or if you want to provide your own. Lets first assume you want full control and want to do things the harder (yet still simple) way, and want to build your own raw logger in order to fully control the output of your logger. </p>
 
@@ -184,7 +186,87 @@ bar.testlog();
 </code></pre>
 
 <p>In the above situation, foo will not log any DEBUG, INFO or NOTICE level log lines, while bar will.</p>
-
+<h2>Why choose libKISSlog?</h2>
+There are many C++ and C logging libraries around, so why would you pick libKISSlog and not one of the other ones, 
+or do you need a logging library at all, or could you suffice just using the facilities that the STL already offers?
+Lets look at a long list of factors that may be important for you when choosing a particular library for your project.
+We will start with a list of factors where libKISSlog comes out good.
+<h3>No singletons</h3>
+Many logging libraries use singletons or other forms of global mutable state. While the singleton pattern is a wel 
+known GoF design pattern. A pattern however that has turned out to be a controversial pattern that some consider an
+anti-pattern. There are issues with testing, issues with multi-threading, problems from a dependency point of view.
+If you also view the singleton pattern and other forms of global mutable state like global variables as bad practice,
+than a logging library like libKISSlog may be right for you.
+<h3>No macros</h3>
+Many C++ coding standards explicitly ban the use of macros. Logging libraries seem to be a place however where the use 
+of macros is somehow accepted. The question is, is a piece of basic program infrastructure like a log library worth
+letting you sane coding guideline slide? If you are convinced about the sanity of banning macros, using a macro free 
+logging library like libKISSlog may be right for you.
+<h3>No run time filtering</h3>
+C++, other than for example Java, is a language where one of the base paradigms is the use of different techniques for 
+moving much of the CPU work to compile-time. If you believe that filtering of log messages based on severity levels 
+is something that should happen compile-time, than a template library like libKISSlog may be right fopr you.
+<h3>No big framework</h3>
+Java is a language of frameworks, people moving from Java to C++ often miss their frameworks, and some C++ logging 
+libraries have arissen from this. This while people who moved from more low level languages to C++, or target more 
+minimal hardware, often have a strong dislike for these in their view bloated frameworks. If you dislike large 
+framework style libraries, than a small and light logging library like libKISSlog may be right for you. 
+<h3>Friendly stream based interface</h3>
+Streams are undenieable the most programmer friendly way of doing output. A stream however that does not produce 
+any output, for example as a result that it is a null-stream, will as a result of its usage pattern, that combines it
+with somethime expensive operator<<() invocations, makes the use of streams as basic interface relatively expensive.
+In much of the code-base this wont be a problem, but in performance critical inner loops it most definetely will.
+If you believe that inner loop logging is a special case, and a questionable use of logging anyway, that doesnt warant 
+abandoning the friendly stream based interface, than a logging library like libKISSlog with a friendly stream interface 
+may be right for you.
+<h3>Template library</h3>
+If you enjoy using the STL and maybe some loki or boost library, than you will probably prefer a C++ template library
+like libKISSlog over a non template C++ library. 
+<h3>Support for multi-threading</h3>
+If you are going to log from multiple threads, than you will want a library that like libKISSlog supports multi-threading.
+<h3>Support for efficient single threading</h3>
+If you sometimes want to log in multi-threaded programs, but at other times don't want to pay the efficiency price of 
+thread-safe code when logging from a single thread, than you will probably want a library that like libKISSlog makes 
+thread safety optional.  
+<h3>Extendable</h3>
+If you are the type of user that wants to be able to plug in his/her own log channels, for example logging to an 
+encrypted stream, using JSON formatting, etc, than you will want to use an extendable logging solution like libKISSlog 
+offers.
+<h3>Per sub-system log-level filtering</h3>
+If a single filter on log level is not sufficient for you but you want to fine controll what sub-systems would for example log at 
+DEBUG level and above and what sub-systems only at NOTICE level and above, than you will want a logging library that like
+libKISSlog allows this fine level of control.
+<h3>No resource management issues</h3>
+In C++ we have the RAII idiom for doing resource management. Unfortunately some log library authors aparently havnt discovered the
+joy of using RAII and thus of writing memory leak free code. This should not be a question of taste, you do not want to use
+any library that leaks memory. 
+<h3>Support for syslog on POSIX systems</h3>
+On production server software running on POSIX systems, the convention for logging is to use syslog. If your code targets these
+types of systems you will want a logging library like libKISSlog that supports logging to syslog.
+<h3>Why NOT choose libKISSlog</h3>
+Next to reasons why you may want to use libKISSlog for your project, there are also reasons why this library may not be the right solution for you.
+<h4>Cross platform support untested.</h4>
+Currently this library has only been tested on POSIX systems. If you want a library for windows that has actually been tested on the windows platform,
+than libKISSlog may not be the library for you.
+<h4>No wchar support (yet)</h4>
+On windows, support for wchar based output may be crucial. Currently libKISSlog does not support wchar logging.
+<h4>No asynchonous logging</h4>
+If you have a system with many concurent threads, the overhead of synchonous metaphor based logging may become a
+serious bottleneck. Currently libKISSlog does not support the more efficient actor model based asynchonous logging model
+that is suitable for highly concurent applications.
+<h4>No singletons may hurt</h4>
+If you are part of thelarge group of C++ developers the use of singletons and other similar shared mutable state 
+techniques are simply a fact of life. Adding a loggin library to the mix that <i>demands</i> the use of constructor
+based dependency injection may simply be to painstaking for you for libKISSlog to be of practical use.
+<h4>Nothing like Log4J</h4>
+If you have a Java background and <i>LOVE</i> Log4J, than libKISSlog will bring great sorow for you. The libKISSlog library is absolutely 
+nothing like Log4J.
+<h4>std::streambuf can be enough</h4>
+If you look at the implementation of libKISSlog you will see that although it has a great list of features, its actually a quite simple 
+library. The reason for this is that it makes use of what the STL has to offer, most notably the use of an subclassing of
+std::streambuf. When your logging demands are very specific, than although libKISSlog is prety light, it may be overkill still.
+You may just want to look at the libKISSlog sources and create your own simple and tailored logging library using these
+STL facilities yourself.
         </section>
 
         <footer>
