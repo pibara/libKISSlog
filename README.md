@@ -2,7 +2,6 @@ libKISSlog
 ==========
 
 The KISSlog library is a simple header only C++(11) template library for logging in C++. 
----------------------------------------------------------------------------------------
 
 For more information check [this](http://pibara.github.com/libKISSlog/) page, or have a look at the
 two pieces of demo code streamdemo.cpp and syslogdemo.cpp.
