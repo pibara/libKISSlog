@@ -1,3 +1,4 @@
 Twinkle Sardana: Started the discussion on a LinkedIn group (http://www.linkedin.com/groups?home=&gid=86782) that led to this library.
 Torsten Schröder: Provided mutex code that should allow things to build and work on MS-Windows even without C++11.
 Evgeny Panasyuk: Reporting a bug and multiple compiler warnings on the Windows platform.
+Jochen van der Wal: Testing and fixing the mutex code on MS-Windows. 

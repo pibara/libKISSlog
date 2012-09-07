@@ -151,6 +151,7 @@ namespace kisslog {
           return &mGlobalMutex; 
         }
      };
+     CRITICAL_SECTION init_guard::mGlobalMutex;
   } 
   class guard {
       static detail::init_guard mGlobalMutex; 
@@ -162,6 +163,7 @@ namespace kisslog {
         LeaveCriticalSection(mGlobalMutex());
       }       
   };
+  detail::init_guard guard::mGlobalMutex;
 #endif
 #endif
     template <typename T>
