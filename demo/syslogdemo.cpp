@@ -22,7 +22,7 @@ class Bar {
     }
 };
 #ifndef WIN32
-typedef kisslog::rawlogger::sysloglogger<kisslog::facility::USER,kisslog::threading::SINGLE> syslograwlogger;
+typedef kisslog::rawlogger::sysloglogger<kisslog::facility::USER,kisslog::threading::MULTI> syslograwlogger;
 typedef kisslog::logger<syslograwlogger,kisslog::severity::WARNING> warnlogger;
 typedef kisslog::logger<syslograwlogger,kisslog::severity::DEBUG> debuglogger;
 #else

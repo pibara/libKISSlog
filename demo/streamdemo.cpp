@@ -22,7 +22,7 @@ class Bar {
     }
 };
 
-typedef kisslog::rawlogger::ostreamlogger<kisslog::threading::SINGLE> ostreamrawlogger;
+typedef kisslog::rawlogger::ostreamlogger<kisslog::threading::MULTI> ostreamrawlogger;
 typedef kisslog::logger<ostreamrawlogger,kisslog::severity::WARNING> warnlogger;
 typedef kisslog::logger<ostreamrawlogger,kisslog::severity::DEBUG> debuglogger;
 

@@ -117,6 +117,7 @@ namespace kisslog {
           mGlobalMutex.unlock();
         }       
     };
+    std::mutex guard::mGlobalMutex;
 #else
 #ifndef WIN32
     class guard {
@@ -129,6 +130,7 @@ namespace kisslog {
           pthread_mutex_unlock(&mGlobalMutex);
         }       
     };
+    pthread_mutex_t guard::mGlobalMutex= PTHREAD_MUTEX_INITIALIZER;
 #else
    //Piece of Win32 code contributed by Torsten Schröder
    namespace detail
@@ -167,6 +169,8 @@ namespace kisslog {
     template <>
     class guard_if_needed <MULTI> {
         guard mGuard;      
+       public:
+        guard_if_needed():mGuard(){}
     };
   }
   //A list of log levels as simple classes.
