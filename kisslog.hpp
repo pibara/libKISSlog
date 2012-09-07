@@ -297,14 +297,12 @@ namespace kisslog {
   template <typename L,typename S,typename R>
   class logstreambuf : public std::streambuf {
       L &mLogger;
-      std::string mPrefix;
       char data[256];
       size_t index;
     public:
-      logstreambuf(L logger):mLogger(logger){
+      logstreambuf(L &logger):mLogger(logger),index(0){
         setp(0,0);
         setg(0,0,0);
-        index=0;
       }
       int overflow(int c) {
         setp(0,0);
@@ -391,6 +389,7 @@ namespace kisslog {
      virtual std::ostream &crit()=0;
      virtual std::ostream &alert()=0;
      virtual std::ostream &emerg()=0;
+     virtual ~logger_base(){}
   };
 
   //The actual logger.
