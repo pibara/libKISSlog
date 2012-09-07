@@ -101,6 +101,7 @@ namespace kisslog {
       }
     }; 
   }
+  
 #endif
   //Some helper classes for allowing multi threading (in a crude way) only when needed.
   namespace threading {
@@ -117,7 +118,6 @@ namespace kisslog {
           mGlobalMutex.unlock();
         }       
     };
-    std::mutex guard::mGlobalMutex;
 #else
 #ifndef WIN32
     class guard {
@@ -130,7 +130,6 @@ namespace kisslog {
           pthread_mutex_unlock(&mGlobalMutex);
         }       
     };
-    pthread_mutex_t guard::mGlobalMutex= PTHREAD_MUTEX_INITIALIZER;
 #else
    //Piece of Win32 code contributed by Torsten Schröder
    namespace detail
@@ -151,7 +150,6 @@ namespace kisslog {
           return &mGlobalMutex; 
         }
      };
-     CRITICAL_SECTION init_guard::mGlobalMutex;
   } 
   class guard {
       static detail::init_guard mGlobalMutex; 
@@ -163,7 +161,6 @@ namespace kisslog {
         LeaveCriticalSection(mGlobalMutex());
       }       
   };
-  detail::init_guard guard::mGlobalMutex;
 #endif
 #endif
     template <typename T>
