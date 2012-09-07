@@ -1,1 +1,2 @@
 Torsten Schröder: Provided mutex code that should allow things to build and work on MS-Windows even without C++11.
+Evgeny Panasyuk: Reporting a bug and multiple compiler warnings on the Windows platform.
