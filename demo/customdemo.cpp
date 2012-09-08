@@ -3,10 +3,10 @@
 class MyRawLogger {
     size_t mLineno;
    public:
-    template <typename T>
+    template <kisslog::severity::Severity S>
     void log(std::string line) {
            mLineno++;
-           std::cerr << mLineno << " : " << T::asPrefix() << " : " << line;
+           std::cerr << mLineno << " : " << kisslog::severity::asPrefix<S>() << " : " << line;
     }
 };
 

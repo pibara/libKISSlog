@@ -174,86 +174,18 @@ namespace kisslog {
   }
   //A list of log levels as simple classes.
   namespace severity {
-    struct DEBUG {
-#ifndef WIN32
-       static int asSyslogLevel() {
-         return LOG_DEBUG;
-       }
-#endif
-       static std::string asPrefix() {
-          return "DEBUG";
-       }
+    enum Severity {// Numerical codes are from RFC-5424
+        EMERG=0, ALERT=1, CRIT=2, ERR=3, WARNING=4, NOTICE=5, INFO=6, DEBUG=7
     };
-    struct INFO {
-#ifndef WIN32
-       static int asSyslogLevel() {
-         return LOG_INFO;
-       }
-#endif
-       static std::string asPrefix() {
-          return "INFO";
-       }
-    };
-    struct NOTICE {
-#ifndef WIN32
-       static int asSyslogLevel() {
-         return LOG_NOTICE;
-       }
-#endif
-       static std::string asPrefix() {
-          return "NOTICE";
-       }
-    };
-    struct WARNING {
-#ifndef WIN32
-       static int asSyslogLevel() {
-         return LOG_WARNING;
-       }
-#endif
-       static std::string asPrefix() {
-          return "WARNING";
-       }
-    };
-    struct ERR {
-#ifndef WIN32
-       static int asSyslogLevel() {
-         return LOG_ERR;
-       }
-#endif
-       static std::string asPrefix() {
-          return "ERR";
-       }
-    };
-    struct CRIT {
-#ifndef WIN32
-       static int asSyslogLevel() {
-         return LOG_CRIT;
-       }
-#endif
-       static std::string asPrefix() {
-          return "CRIT";
-       }
-    };
-    struct ALERT {
-#ifndef WIN32
-       static int asSyslogLevel() {
-         return LOG_ALERT;
-       }
-#endif
-       static std::string asPrefix() {
-          return "ALERT";
-       }
-    };
-    struct EMERG {
-#ifndef WIN32
-       static int asSyslogLevel() {
-         return LOG_EMERG;
-       }
-#endif
-       static std::string asPrefix() {
-          return "EMERG";
-       }
-    };
+    template<Severity> inline std::string asPrefix();
+    template<> inline std::string asPrefix<EMERG>(){ return "EMERG"; }
+    template<> inline std::string asPrefix<ALERT>(){ return "ALERT"; }
+    template<> inline std::string asPrefix<CRIT>(){ return "CRIT"; }
+    template<> inline std::string asPrefix<ERR>(){ return "ERR"; }
+    template<> inline std::string asPrefix<WARNING>(){ return "WARNING"; }
+    template<> inline std::string asPrefix<NOTICE>(){ return "NOTICE"; }
+    template<> inline std::string asPrefix<INFO>(){ return "INFO"; }
+    template<> inline std::string asPrefix<DEBUG>(){ return "DEBUG"; }
   }
   //Some raw loggers, well one actually, currently.There is only a syslog raw logger now but we could add a stream logger here maybe.
   namespace rawlogger {
@@ -269,10 +201,10 @@ namespace kisslog {
            closelog();
         }
 
-        template <typename T>
+        template <severity::Severity S>
         void log(std::string line) {
            threading::guard_if_needed<G> myguard;
-           syslog(T::asSyslogLevel(),"%s",(T::asPrefix() + " : " + line).c_str());
+           syslog(S,"%s",(severity::asPrefix<S>() + " : " + line).c_str());
         }
     };
 #endif
@@ -281,23 +213,25 @@ namespace kisslog {
         std::ostream &mStream;
       public:
         ostreamlogger(std::ostream &stream):mStream(stream) {}
-        template <typename T>
+        template <severity::Severity S>
         void log(std::string line) {
            threading::guard_if_needed<G> myguard;
            time_t ctt = time(0);
            std::string timestring=asctime(localtime(&ctt));
            timestring=timestring.substr(0,timestring.size()-1);
-           mStream << timestring << " : " << T::asPrefix() << " : " << line;
+           mStream << timestring << " : " << severity::asPrefix<S>() << " : " << line;
         }
     };
   }
+  template <typename L>
   class nullstreambuf : public std::streambuf {
       public:
+        nullstreambuf(L &){}
         int overflow(int c) { return c; }
   };
   //A simple streambuf for any raw logger. Makes  things line oriented and cuts of lines at
   //some maximum length.
-  template <typename L,typename S,typename R>
+  template <typename L,severity::Severity S>
   class logstreambuf : public std::streambuf {
       L &mLogger;
       char data[256];
@@ -322,63 +256,17 @@ namespace kisslog {
           return c;
       }
   };
-  //Set of partial specializations that keep the above overflow function from being used by log streams that should be filtered.
-  template <typename L>
-  class logstreambuf<L,severity::DEBUG,severity::INFO> : public nullstreambuf {public: logstreambuf(L logger){}}; 
-  template <typename L>
-  class logstreambuf<L,severity::DEBUG,severity::NOTICE> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::DEBUG,severity::WARNING> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::DEBUG,severity::ERR> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::DEBUG,severity::CRIT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::DEBUG,severity::ALERT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::DEBUG,severity::EMERG> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::INFO,severity::NOTICE> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::INFO,severity::WARNING> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::INFO,severity::ERR> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::INFO,severity::CRIT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::INFO,severity::ALERT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::INFO,severity::EMERG> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::NOTICE,severity::WARNING> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::NOTICE,severity::ERR> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::NOTICE,severity::CRIT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::NOTICE,severity::ALERT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::NOTICE,severity::EMERG> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::WARNING,severity::ERR> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::WARNING,severity::CRIT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::WARNING,severity::ALERT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::WARNING,severity::EMERG> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::ERR,severity::CRIT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::ERR,severity::ALERT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::ERR,severity::EMERG> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::CRIT,severity::ALERT> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::CRIT,severity::EMERG> : public nullstreambuf {public: logstreambuf(L logger){}};
-  template <typename L>
-  class logstreambuf<L,severity::ALERT,severity::EMERG> : public nullstreambuf {public: logstreambuf(L logger){}};
+
+  template<bool C,typename T1,typename T2> struct if_c {
+      typedef T1 type;
+  };
+  template<typename T1,typename T2> struct if_c<false,T1,T2> {
+      typedef T2 type;
+  };
+  template <typename L,severity::Severity SbSeverity,severity::Severity ChosenSeverity>
+  struct streambuf_selector { // nullstreambuf is used when streambuf severity greater than chosen severity
+      typedef typename if_c< (SbSeverity<=ChosenSeverity), logstreambuf<L,SbSeverity>, nullstreambuf<L> >::type type;
+  };
  
   //To give the logging lib a friendly API, we define a common abstract basecalass for all loggers.
   //This should allow passing a logger reference to the constructor of client classes without hooking those
@@ -396,24 +284,24 @@ namespace kisslog {
   };
 
   //The actual logger.
-  template <typename R,typename S>
+  template <typename R,severity::Severity S>
   class logger: public logger_base {
     R &mRawLogger;
-    logstreambuf<R,severity::DEBUG,S> mDebugSb;
+    typename streambuf_selector<R,severity::DEBUG,S>::type mDebugSb;
     std::ostream mDebugStream;
-    logstreambuf<R,severity::INFO,S> mInfoSb;
+    typename streambuf_selector<R,severity::INFO,S>::type mInfoSb;
     std::ostream mInfoStream;
-    logstreambuf<R,severity::NOTICE,S> mNoticeSb;
+    typename streambuf_selector<R,severity::NOTICE,S>::type mNoticeSb;
     std::ostream mNoticeStream;
-    logstreambuf<R,severity::WARNING,S> mWarningSb;
+    typename streambuf_selector<R,severity::WARNING,S>::type mWarningSb;
     std::ostream mWarningStream;
-    logstreambuf<R,severity::ERR,S> mErrSb;
+    typename streambuf_selector<R,severity::ERR,S>::type mErrSb;
     std::ostream mErrStream;
-    logstreambuf<R,severity::CRIT,S> mCritSb;
+    typename streambuf_selector<R,severity::CRIT,S>::type mCritSb;
     std::ostream mCritStream;
-    logstreambuf<R,severity::ALERT,S> mAlertSb;
+    typename streambuf_selector<R,severity::ALERT,S>::type mAlertSb;
     std::ostream mAlertStream;
-    logstreambuf<R,severity::EMERG,S> mEmergSb;
+    typename streambuf_selector<R,severity::EMERG,S>::type mEmergSb;
     std::ostream mEmergStream;
   public: 
     logger(R &sl):mRawLogger(sl),mDebugSb(mRawLogger),mDebugStream(&mDebugSb),
