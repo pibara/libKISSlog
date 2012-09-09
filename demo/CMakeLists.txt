@@ -17,7 +17,7 @@ add_test(customdemo customdemo)
 add_executable(streamdemo streamdemo.cpp ../kisslog-mt-static.cpp)
 add_test(streamdemo streamdemo)
 
-if(!WIN2)
+if(NOT WIN32)
     add_executable(syslogdemo syslogdemo.cpp ../kisslog-mt-static.cpp)
     add_test(syslogdemo syslogdemo)
 endif()
