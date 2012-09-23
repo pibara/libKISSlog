@@ -101,6 +101,28 @@ namespace kisslog {
       }
     }; 
   }
+  namespace util {
+    template <typename C>    
+    struct CharUtil; 
+    template <>
+    struct CharUtil<char> {
+      char newline() { return '\n';}
+      std::basic_string<char> sp_col_sp() { return " : "; }
+      std::basic_string<char> now() {
+         time_t ctt = time(0);
+         std::basic_string<char> timestring=asctime(localtime(&ctt));
+         timestring=timestring.substr(0,timestring.size()-1);
+         return timestring;
+      }
+    };
+    template <>
+    struct CharUtil<wchar_t> {
+      char newline() { return L'\n';}
+      std::basic_string<wchar_t> sp_col_sp() { return L" : "; }
+      //FIXME: we need a wchar_t 'now()' definition also!.
+    };
+
+  }
   
 #endif
   //Some helper classes for allowing multi threading (in a crude way) only when needed.
@@ -177,24 +199,35 @@ namespace kisslog {
     enum Severity {// Numerical codes are from RFC-5424
         EMERG=0, ALERT=1, CRIT=2, ERR=3, WARNING=4, NOTICE=5, INFO=6, DEBUG=7
     };
-    template<Severity> inline std::string asPrefix();
-    template<> inline std::string asPrefix<EMERG>(){ return "EMERG"; }
-    template<> inline std::string asPrefix<ALERT>(){ return "ALERT"; }
-    template<> inline std::string asPrefix<CRIT>(){ return "CRIT"; }
-    template<> inline std::string asPrefix<ERR>(){ return "ERR"; }
-    template<> inline std::string asPrefix<WARNING>(){ return "WARNING"; }
-    template<> inline std::string asPrefix<NOTICE>(){ return "NOTICE"; }
-    template<> inline std::string asPrefix<INFO>(){ return "INFO"; }
-    template<> inline std::string asPrefix<DEBUG>(){ return "DEBUG"; }
+    template<Severity,typename C> inline std::basic_string<C> asPrefix();
+    template<> inline std::basic_string<char> asPrefix<EMERG,char>(){ return "EMERG"; }
+    template<> inline std::basic_string<char> asPrefix<ALERT,char>(){ return "ALERT"; }
+    template<> inline std::basic_string<char> asPrefix<CRIT,char>(){ return "CRIT"; }
+    template<> inline std::basic_string<char> asPrefix<ERR,char>(){ return "ERR"; }
+    template<> inline std::basic_string<char> asPrefix<WARNING,char>(){ return "WARNING"; }
+    template<> inline std::basic_string<char> asPrefix<NOTICE,char>(){ return "NOTICE"; }
+    template<> inline std::basic_string<char> asPrefix<INFO,char>(){ return "INFO"; }
+    template<> inline std::basic_string<char> asPrefix<DEBUG,char>(){ return "DEBUG"; }
+    template<> inline std::basic_string<wchar_t> asPrefix<EMERG,wchar_t>(){ return L"EMERG"; }
+    template<> inline std::basic_string<wchar_t> asPrefix<ALERT,wchar_t>(){ return L"ALERT"; }
+    template<> inline std::basic_string<wchar_t> asPrefix<CRIT,wchar_t>(){ return L"CRIT"; }
+    template<> inline std::basic_string<wchar_t> asPrefix<ERR,wchar_t>(){ return L"ERR"; }
+    template<> inline std::basic_string<wchar_t> asPrefix<WARNING,wchar_t>(){ return L"WARNING"; }
+    template<> inline std::basic_string<wchar_t> asPrefix<NOTICE,wchar_t>(){ return L"NOTICE"; }
+    template<> inline std::basic_string<wchar_t> asPrefix<INFO,wchar_t>(){ return L"INFO"; }
+    template<> inline std::basic_string<wchar_t> asPrefix<DEBUG,wchar_t>(){ return L"DEBUG"; }
   }
   //Some raw loggers, well one actually, currently.There is only a syslog raw logger now but we could add a stream logger here maybe.
   namespace rawlogger {
 #ifndef WIN32
+    template <typename F,typename G,typename C>
+    class sysloglogger;
     template <typename F,typename G>
-    class sysloglogger {
-        std::string mIdent;
+    class sysloglogger<F,G,char> {
+        std::basic_string<char> mIdent;
+        util::CharUtil<char> charutil;
       public:
-        sysloglogger(std::string ident):mIdent(ident) {
+        sysloglogger(std::basic_string<char> ident):mIdent(ident),charutil() {
           openlog(mIdent.c_str(),LOG_PID, F::asSyslogFacility());    
         } 
         ~sysloglogger() {
@@ -202,57 +235,58 @@ namespace kisslog {
         }
 
         template <severity::Severity S>
-        void log(std::string line) {
+        void log(std::basic_string<char> line) {
            threading::guard_if_needed<G> myguard;
-           syslog(S,"%s",(severity::asPrefix<S>() + " : " + line).c_str());
+           syslog(S,"%s",(severity::asPrefix<S,char>() + charutil.sp_col_sp() + line).c_str());
         }
     };
 #endif
-    template <typename G>
+    template <typename G, typename C>
     class ostreamlogger {
-        std::ostream &mStream;
+        std::basic_ostream<C> &mStream;
+        util::CharUtil<C> charutil;
       public:
-        ostreamlogger(std::ostream &stream):mStream(stream) {}
+        ostreamlogger(std::basic_ostream<C> &stream):mStream(stream),charutil() {}
         template <severity::Severity S>
-        void log(std::string line) {
+        void log(std::basic_string<C> line) {
            threading::guard_if_needed<G> myguard;
-           time_t ctt = time(0);
-           std::string timestring=asctime(localtime(&ctt));
-           timestring=timestring.substr(0,timestring.size()-1);
-           mStream << timestring << " : " << severity::asPrefix<S>() << " : " << line;
+           mStream << charutil.now() << charutil.sp_col_sp() << severity::asPrefix<S,C>() << charutil.sp_col_sp() << line;
         }
     };
   }
-  template <typename L>
-  class nullstreambuf : public std::streambuf {
+  template <typename L,typename C>
+  class nullstreambuf : public std::basic_streambuf<C> {
       public:
         nullstreambuf(L &){}
         int overflow(int c) { return c; }
   };
   //A simple streambuf for any raw logger. Makes  things line oriented and cuts of lines at
   //some maximum length.
-  template <typename L,severity::Severity S>
-  class logstreambuf : public std::streambuf {
+  template <typename L,severity::Severity S,typename C>
+  class logstreambuf : public std::basic_streambuf<C> {
       L &mLogger;
-      char data[256];
+      C data[256];
       size_t index;
+      util::CharUtil<C> charutil;
     public:
-      logstreambuf(L &logger):mLogger(logger),index(0){
+      std::basic_streambuf<C>::setp;
+      std::basic_streambuf<C>::setg;
+      logstreambuf(L &logger):mLogger(logger),index(0),charutil(){
         setp(0,0);
         setg(0,0,0);
       }
       int overflow(int c) {
         setp(0,0);
-        if (c != std::char_traits<char>::eof()) {
+        if (c != std::char_traits<C>::eof()) {
           data[index]=c;
           index++;
         }
-        if ((c == '\n') || (index == 255) || (c == std::char_traits<char>::eof())) {
+        if ((c == charutil.newline()) || (index == 255) || (c == std::char_traits<C>::eof())) {
           data[index]=0;
-          mLogger.template log<S>(std::string(data));
+          mLogger.template log<S>(std::basic_string<C>(data));
           index=0;
         }
-        if (c != std::char_traits<char>::eof()) return 0;
+        if (c != std::char_traits<C>::eof()) return 0;
           return c;
       }
   };
@@ -263,46 +297,47 @@ namespace kisslog {
   template<typename T1,typename T2> struct if_c<false,T1,T2> {
       typedef T2 type;
   };
-  template <typename L,severity::Severity SbSeverity,severity::Severity ChosenSeverity>
+  template <typename L,severity::Severity SbSeverity,severity::Severity ChosenSeverity,typename C>
   struct streambuf_selector { // nullstreambuf is used when streambuf severity greater than chosen severity
-      typedef typename if_c< (SbSeverity<=ChosenSeverity), logstreambuf<L,SbSeverity>, nullstreambuf<L> >::type type;
+      typedef typename if_c< (SbSeverity<=ChosenSeverity), logstreambuf<L,SbSeverity,C>, nullstreambuf<L,C> >::type type;
   };
  
   //To give the logging lib a friendly API, we define a common abstract basecalass for all loggers.
   //This should allow passing a logger reference to the constructor of client classes without hooking those
   //client classes into our template hyrarchy.
+  template <typename C>
   struct logger_base {
-     virtual std::ostream &debug()=0;
-     virtual std::ostream &info()=0;
-     virtual std::ostream &notice()=0;
-     virtual std::ostream &warning()=0;
-     virtual std::ostream &err()=0;
-     virtual std::ostream &crit()=0;
-     virtual std::ostream &alert()=0;
-     virtual std::ostream &emerg()=0;
+     virtual std::basic_ostream<C> &debug()=0;
+     virtual std::basic_ostream<C> &info()=0;
+     virtual std::basic_ostream<C> &notice()=0;
+     virtual std::basic_ostream<C> &warning()=0;
+     virtual std::basic_ostream<C> &err()=0;
+     virtual std::basic_ostream<C> &crit()=0;
+     virtual std::basic_ostream<C> &alert()=0;
+     virtual std::basic_ostream<C> &emerg()=0;
      virtual ~logger_base(){}
   };
 
   //The actual logger.
-  template <typename R,severity::Severity S>
-  class logger: public logger_base {
+  template <typename R,severity::Severity S,typename C>
+  class logger: public logger_base<C> {
     R &mRawLogger;
-    typename streambuf_selector<R,severity::DEBUG,S>::type mDebugSb;
-    std::ostream mDebugStream;
-    typename streambuf_selector<R,severity::INFO,S>::type mInfoSb;
-    std::ostream mInfoStream;
-    typename streambuf_selector<R,severity::NOTICE,S>::type mNoticeSb;
-    std::ostream mNoticeStream;
-    typename streambuf_selector<R,severity::WARNING,S>::type mWarningSb;
-    std::ostream mWarningStream;
-    typename streambuf_selector<R,severity::ERR,S>::type mErrSb;
-    std::ostream mErrStream;
-    typename streambuf_selector<R,severity::CRIT,S>::type mCritSb;
-    std::ostream mCritStream;
-    typename streambuf_selector<R,severity::ALERT,S>::type mAlertSb;
-    std::ostream mAlertStream;
-    typename streambuf_selector<R,severity::EMERG,S>::type mEmergSb;
-    std::ostream mEmergStream;
+    typename streambuf_selector<R,severity::DEBUG,S,C>::type mDebugSb;
+    std::basic_ostream<C> mDebugStream;
+    typename streambuf_selector<R,severity::INFO,S,C>::type mInfoSb;
+    std::basic_ostream<C> mInfoStream;
+    typename streambuf_selector<R,severity::NOTICE,S,C>::type mNoticeSb;
+    std::basic_ostream<C> mNoticeStream;
+    typename streambuf_selector<R,severity::WARNING,S,C>::type mWarningSb;
+    std::basic_ostream<C> mWarningStream;
+    typename streambuf_selector<R,severity::ERR,S,C>::type mErrSb;
+    std::basic_ostream<C> mErrStream;
+    typename streambuf_selector<R,severity::CRIT,S,C>::type mCritSb;
+    std::basic_ostream<C> mCritStream;
+    typename streambuf_selector<R,severity::ALERT,S,C>::type mAlertSb;
+    std::basic_ostream<C> mAlertStream;
+    typename streambuf_selector<R,severity::EMERG,S,C>::type mEmergSb;
+    std::basic_ostream<C> mEmergStream;
   public: 
     logger(R &sl):mRawLogger(sl),mDebugSb(mRawLogger),mDebugStream(&mDebugSb),
                                  mInfoSb(mRawLogger),mInfoStream(&mInfoSb),
@@ -313,14 +348,14 @@ namespace kisslog {
                                  mAlertSb(mRawLogger),mAlertStream(&mAlertSb),
                                  mEmergSb(mRawLogger),mEmergStream(&mEmergSb)
                                  {}
-    std::ostream &debug() { return mDebugStream;}
-    std::ostream &info() { return mInfoStream;}
-    std::ostream &notice() { return mNoticeStream;}
-    std::ostream &warning() { return mWarningStream;}
-    std::ostream &err() { return mErrStream;}
-    std::ostream &crit() { return mCritStream;}
-    std::ostream &alert() { return mAlertStream;}
-    std::ostream &emerg() { return mEmergStream;}
+    std::basic_ostream<C> &debug() {return mDebugStream;}
+    std::basic_ostream<C> &info() {return mInfoStream;}
+    std::basic_ostream<C> &notice() {return mNoticeStream;}
+    std::basic_ostream<C> &warning() {return mWarningStream;}
+    std::basic_ostream<C> &err() {return mErrStream;}
+    std::basic_ostream<C> &crit() {return mCritStream;}
+    std::basic_ostream<C> &alert() {return mAlertStream;}
+    std::basic_ostream<C> &emerg() {return mEmergStream;}
   };
 }
 #endif

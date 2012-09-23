@@ -14,6 +14,9 @@ include_directories("../")
 add_executable(customdemo customdemo.cpp ../kisslog-mt-static.cpp)
 add_test(customdemo customdemo)
 
+add_executable(wchar_custdemo wchar_custdemo.cpp)
+add_test(wchar_custdemo wchar_custdemo)
+
 add_executable(streamdemo streamdemo.cpp ../kisslog-mt-static.cpp)
 add_test(streamdemo streamdemo)
 

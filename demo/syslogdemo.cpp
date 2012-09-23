@@ -1,9 +1,9 @@
 #include <kisslog.hpp>
 
 class Foo {
-    kisslog::logger_base &mLogger;
+    kisslog::logger_base<char> &mLogger;
   public:
-    Foo(kisslog::logger_base &logger):mLogger(logger) {}
+    Foo(kisslog::logger_base<char> &logger):mLogger(logger) {}
     void testlog() {
         mLogger.debug() << "Foo is debug logging" << std::endl;
         mLogger.notice() << "Foo wants you to notice" << std::endl;
@@ -12,9 +12,9 @@ class Foo {
 };
 
 class Bar {
-    kisslog::logger_base &mLogger;
+    kisslog::logger_base<char> &mLogger;
   public:
-    Bar(kisslog::logger_base &logger):mLogger(logger) {}
+    Bar(kisslog::logger_base<char> &logger):mLogger(logger) {}
     void testlog() {
         mLogger.debug() << "Bar is debug logging" << std::endl;
         mLogger.notice() << "Bar wants you to notice" << std::endl;
@@ -22,9 +22,9 @@ class Bar {
     }
 };
 #ifndef WIN32
-typedef kisslog::rawlogger::sysloglogger<kisslog::facility::USER,kisslog::threading::MULTI> syslograwlogger;
-typedef kisslog::logger<syslograwlogger,kisslog::severity::WARNING> warnlogger;
-typedef kisslog::logger<syslograwlogger,kisslog::severity::DEBUG> debuglogger;
+typedef kisslog::rawlogger::sysloglogger<kisslog::facility::USER,kisslog::threading::MULTI,char> syslograwlogger;
+typedef kisslog::logger<syslograwlogger,kisslog::severity::WARNING,char> warnlogger;
+typedef kisslog::logger<syslograwlogger,kisslog::severity::DEBUG,char> debuglogger;
 #else
 #error Logging to syslog is not supported on the win32 platform.
 #endif
