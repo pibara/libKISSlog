@@ -1,50 +1,72 @@
 #include <kisslog.hpp>
 
+template <typename C>
 class MyRawLogger {
     size_t mLineno;
+    kisslog::util::CharUtil<C> mCharUtil;
    public:
-    template <kisslog::severity::Severity S>
-    void log(std::string line) {
-           mLineno++;
-           std::cerr << mLineno << " : " << kisslog::severity::asPrefix<S,char>() << " : " << line;
-    }
     size_t logcount() {
        return mLineno;
     }
+    template <kisslog::severity::Severity S>
+    void log(std::basic_string<C> line) {
+           mLineno++;
+           std::cerr << mLineno << mCharUtil.sp_col_sp() << kisslog::severity::asPrefix<S,char>() << mCharUtil.sp_col_sp() << line;
+    }
 };
 
+template <typename C>
 class Foo {
-    kisslog::logger_base<char> &mLogger;
+    kisslog::logger_base<C> &mLogger;
   public:
-    Foo(kisslog::logger_base<char> &logger):mLogger(logger) {}
+    Foo(kisslog::logger_base<C> &logger):mLogger(logger) {}
     void testlog() {
+#ifdef KISSLOG_USE_WIDE
+        mLogger.debug() << L"Foo is debug logging" << std::endl;
+        mLogger.notice() << L"Foo wants you to notice" << std::endl;
+        mLogger.crit() << L"Foo is in big problems." << std::endl;
+#else
         mLogger.debug() << "Foo is debug logging" << std::endl;
         mLogger.notice() << "Foo wants you to notice" << std::endl;
         mLogger.crit() << "Foo is in big problems." << std::endl;
+#endif
     }
 };
 
+template <typename C>
 class Bar {
-    kisslog::logger_base<char> &mLogger;
+    kisslog::logger_base<C> &mLogger;
   public:
-    Bar(kisslog::logger_base<char> &logger):mLogger(logger) {}
+    Bar(kisslog::logger_base<C> &logger):mLogger(logger) {}
     void testlog() {
+#ifdef KISSLOG_USE_WIDE
+        mLogger.debug() << L"Bar is debug logging" << std::endl;
+        mLogger.notice() << L"Bar wants you to notice" << std::endl;
+        mLogger.crit() << L"Bar is in big problems." << std::endl;
+#else
         mLogger.debug() << "Bar is debug logging" << std::endl;
         mLogger.notice() << "Bar wants you to notice" << std::endl;
         mLogger.crit() << "Bar is in big problems." << std::endl;
+#endif
     }
 };
 
-typedef MyRawLogger myrawlogger;
-typedef kisslog::logger<myrawlogger,kisslog::severity::WARNING,char> warnlogger;
-typedef kisslog::logger<myrawlogger,kisslog::severity::DEBUG,char> debuglogger;
+#ifdef KISSLOG_USE_WIDE
+typedef wchar_t chartype;
+#else
+typedef char chartype;
+#endif
+
+typedef MyRawLogger<chartype> myrawlogger;
+typedef kisslog::logger<myrawlogger,kisslog::severity::WARNING,chartype> warnlogger;
+typedef kisslog::logger<myrawlogger,kisslog::severity::DEBUG,chartype> debuglogger;
 
 int main(int argc,char **argv) {
-  MyRawLogger rlogger;
+  myrawlogger rlogger;
   warnlogger foologger(rlogger);
   debuglogger barlogger(rlogger);
-  Foo foo(foologger);
-  Bar bar(barlogger);
+  Foo<chartype> foo(foologger);
+  Bar<chartype> bar(barlogger);
   foo.testlog();
   bar.testlog();
   if (rlogger.logcount() !=4) {
