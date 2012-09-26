@@ -22,9 +22,9 @@ class Bar {
     }
 };
 #ifndef WIN32
-typedef kisslog::rawlogger::sysloglogger<kisslog::facility::USER,kisslog::threading::MULTI,char> syslograwlogger;
-typedef kisslog::logger<syslograwlogger,kisslog::severity::WARNING,char> warnlogger;
-typedef kisslog::logger<syslograwlogger,kisslog::severity::DEBUG,char> debuglogger;
+typedef kisslog::rawlogger::sysloglogger<kisslog::facility::USER,kisslog::threading::MULTI> syslograwlogger;
+typedef kisslog::logger<syslograwlogger> warnlogger;
+typedef kisslog::logger<syslograwlogger,kisslog::severity::DEBUG> debuglogger;
 #else
 #error Logging to syslog is not supported on the win32 platform.
 #endif

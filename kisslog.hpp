@@ -220,7 +220,7 @@ namespace kisslog {
   //Some raw loggers, well one actually, currently.There is only a syslog raw logger now but we could add a stream logger here maybe.
   namespace rawlogger {
 #ifndef WIN32
-    template <typename F,typename G,typename C>
+    template <typename F,typename G,typename C=char>
     class sysloglogger;
     template <typename F,typename G>
     class sysloglogger<F,G,char> {
@@ -321,7 +321,7 @@ namespace kisslog {
   };
 
   //The actual logger.
-  template <typename R,severity::Severity S,typename C>
+  template <typename R,severity::Severity S=severity::WARNING,typename C=char>
   class logger: public logger_base<C> {
     R &mRawLogger;
     typename streambuf_selector<R,severity::DEBUG,S,C>::type mDebugSb;
