@@ -106,7 +106,7 @@ namespace kisslog {
     struct CharUtil; 
     template <>
     struct CharUtil<char> {
-      char newline() { return '\n';}
+      std::char_traits<char>::int_type newline() { return '\n';}
       std::basic_string<char> sp_col_sp() { return " : "; }
       std::basic_string<char> now() {
          time_t ctt = time(0);
@@ -117,7 +117,7 @@ namespace kisslog {
     };
     template <>
     struct CharUtil<wchar_t> {
-      char newline() { return L'\n';}
+      std::char_traits<wchar_t>::int_type newline() { return L'\n';}
       std::basic_string<wchar_t> sp_col_sp() { return L" : "; }
       //FIXME: we need a wchar_t 'now()' definition also!.
     };
@@ -254,39 +254,41 @@ namespace kisslog {
         }
     };
   }
-  template <typename L,typename C>
-  class nullstreambuf : public std::basic_streambuf<C> {
+  template <typename L,typename C,typename traits=std::char_traits<C> >
+  class nullstreambuf : public std::basic_streambuf<C,traits > {
       public:
         nullstreambuf(L &){}
-        int overflow(int c) { return c; }
+        typename traits::int_type overflow(typename traits::int_type c) { return c; }
   };
   //A simple streambuf for any raw logger. Makes  things line oriented and cuts of lines at
   //some maximum length.
-  template <typename L,severity::Severity S,typename C>
-  class logstreambuf : public std::basic_streambuf<C> {
+  template <typename L,severity::Severity S,typename C,typename traits=std::char_traits<C> >
+  class logstreambuf : public std::basic_streambuf<C,traits> {
       L &mLogger;
       C data[256];
       size_t index;
       util::CharUtil<C> charutil;
     public:
-      std::basic_streambuf<C>::setp;
-      std::basic_streambuf<C>::setg;
+      using std::basic_streambuf<C,traits>::setp;
+      using std::basic_streambuf<C,traits>::setg;
       logstreambuf(L &logger):mLogger(logger),index(0),charutil(){
         setp(0,0);
         setg(0,0,0);
       }
-      int overflow(int c) {
+      typename traits::int_type overflow(typename traits::int_type c) {
         setp(0,0);
-        if (c != std::char_traits<C>::eof()) {
+        if (c != traits::eof()) {
           data[index]=c;
           index++;
         }
-        if ((c == charutil.newline()) || (index == 255) || (c == std::char_traits<C>::eof())) {
+        if ((c == charutil.newline()) || 
+            (index == 255) || 
+            (c == traits::eof())) {
           data[index]=0;
-          mLogger.template log<S>(std::basic_string<C>(data));
+          mLogger.template log<S>(std::basic_string<C,traits>(data));
           index=0;
         }
-        if (c != std::char_traits<C>::eof()) return 0;
+        if (c != traits::eof()) return 0;
           return c;
       }
   };

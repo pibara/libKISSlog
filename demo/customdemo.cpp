@@ -5,13 +5,18 @@ class MyRawLogger {
     size_t mLineno;
     kisslog::util::CharUtil<C> mCharUtil;
    public:
+    MyRawLogger():mLineno(0),mCharUtil(){}
     size_t logcount() {
        return mLineno;
     }
     template <kisslog::severity::Severity S>
     void log(std::basic_string<C> line) {
            mLineno++;
-           std::cerr << mLineno << mCharUtil.sp_col_sp() << kisslog::severity::asPrefix<S,char>() << mCharUtil.sp_col_sp() << line;
+#ifdef KISSLOG_USE_WIDE
+           std::wcerr << mLineno << mCharUtil.sp_col_sp() << kisslog::severity::asPrefix<S,C>() << mCharUtil.sp_col_sp() << line;
+#else
+           std::cerr << mLineno << mCharUtil.sp_col_sp() << kisslog::severity::asPrefix<S,C>() << mCharUtil.sp_col_sp() << line;
+#endif
     }
 };
 
