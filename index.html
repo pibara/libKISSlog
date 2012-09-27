@@ -49,7 +49,7 @@ It is sugested that for single threaded application you'd add a simple typedef t
 <pre><code>typedef kisslog::threading::SINGLE concurrency_mode_t</code></pre>
 
 When you plan to log from several threads to a non explicitly thread safe raw logger such as the built-in syslog raw 
-logger, than you should do two things. First you should <b>>make sure that the file <i>kisslog-mt-static.cpp</i> will get linked with your program</b>.
+logger, than you should do two things. First you should <b>make sure that the file <i>kisslog-mt-static.cpp</i> will get linked with your program</b>.
 This file contains a single static definition that is needed in multi threaded operation. Next to this you should change the typedef to:
 
 <pre><code>typedef kisslog::threading::MULTI concurrency_mode_t</code></pre>
