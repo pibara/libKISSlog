@@ -44,6 +44,25 @@
 <li>Does not compromise on simplicity in order to facilitate questionable inner-loop logging practices.</li>
 </ul>
 <h2>Using libKISSlog</h2>
+<h3>Header and statics.</h3>
+If your application is to be a single threaded application, 
+or you are using a hand written custom raw logger that is inherantly thread safe, 
+than libKISSlog is a header only library. 
+
+Simply add the file <i></i>kisslog.h</i> to one of your inc directories and in your program add an include for it.
+
+<pre><code>#include &lt;kisslog.h&gt;</code></pre>
+
+It is sugested that for single threaded application you'd add a simple typedef to your program right after including kisslog.h.
+
+<pre><code>typedef kisslog::threading::SINGLE concurrency_mode_t</code></pre>
+
+When you plan to log from several threads to a non explicitly thread safe raw logger such as the built-in syslog raw 
+logger, than you should do two things. First you should make sure that the file <i>kisslog-mt-static.cpp</i> will get linked with your program.
+This file contains a single static definition that is needed in multi threaded operation. Next to this you should change the typedef to:
+
+<pre><code>typedef kisslog::threading::MULTI concurrency_mode_t</code></pre>
+
 <h3>Writing your own raw logger.</h3>
 
 <p>The first thing you will want to do when using LibKISSlog is determine if you ont to use one of the two packaged raw loggers, or if you want to provide your own. Lets first assume you want full control and want to do things the harder (yet still simple) way, and want to build your own raw logger in order to fully control the output of your logger. </p>
