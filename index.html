@@ -141,7 +141,7 @@ typedef base_rawlogger_t&lt;concurency_mode_t&gt; rawlogger_t;
 
 <p>Now before you instantiate your logger its a good idea to create a typedef approprite for your program:</p>
 
-<pre><code>typedef base_myrawlogger&lt;concurrency_mode_t&gt; myrawlogger;
+<pre><code>typedef base_rawlogger_t&lt;concurrency_mode_t&gt; rawlogger_t;
 </code></pre>
 <h5>wide string support</h5>
 Next to supporting multiple concurency modes you might have an application that uses wide strings instead of char based strings.
@@ -193,8 +193,19 @@ warnlogger.debug() &lt;&lt; L"This line won't be logged." &lt;&lt; std::endl;
 </code></pre>
 
 <p>The logger defines a small set of methods, one for each log level, that all return an ostream reference.
-Given our typedef for mywarnlogger defining <em>kisslog::severity::WARNING</em> as minimal level for logging, the warnlogger.err() method will return a stream reference that maps to our raw logger being invoked, while the warnlogger.debug() invocation will return a null stream.</p>
-
+Given our typedef for warnlogger_t defining <em>kisslog::severity::WARNING</em> as minimal level for logging, 
+the warnlogger.err() method will return a stream reference that maps to our raw logger being invoked, while the 
+warnlogger.debug() invocation will return a null stream. The zero argument logging methods that a logger defines are:</p>
+<ul>
+  <li>debug()</li>
+  <li>info()</li>
+  <li>notice()</li>
+  <li>warning()</li>
+  <li>err()</li>
+  <li>crit()</li>
+  <li>alert()</li>
+  <li>emerg()</li>
+</ul>
 <h3>Word of caution regarding debug logging and performance.</h3>
 
 <p>Please note that while our logger will return null streams that are relatively efficient, the sheer volume of debug logs might turn many operator&lt;&lt;() invocations done in inner loops into a major performance bottleneck. Addressing these issues is beyond the scope of libKISSlog or any other logging library that chooses to use a streaming interface. It is thus sugested that you should probably :</p>
