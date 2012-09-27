@@ -33,16 +33,7 @@
         <section id="main_content">
           <h3>The KISS Logging template-library for C++</h3>
 
-<p>LibKISSlog is a trivial light-weight C++ template library that was designed and written according to the KISS ( Keep It Simple &amp; Straightforward) principle. The library leans heavily on the STL for keeping its implementation as simple as its usage, and tries to provide C++ developers with a light-weight, paradigm-pure and flexible alternative to logging libraries that use design and/or implementation decisions that at least the author of LibKISSlog believes to be questionable. Its easiest to explain why LibKISSlog would be suitable for your needs by listing the things that LibKISSlog does <em>NOT</em> choose to use or do: </p>
-
-<ul>
-<li>Uses no singletons or other forms of mutable global state.</li>
-<li>Uses no macro's</li>
-<li>Doesn't try to fit the Java run-time everything model onto a C++ library.</li>
-<li>Doesn't try to be a Java style (bloated) framework.</li>
-<li>Doesn't make the choice for you whether you need thread safety.</li>
-<li>Does not compromise on simplicity in order to facilitate questionable inner-loop logging practices.</li>
-</ul>
+<p>LibKISSlog is a trivial light-weight C++ template library that was designed and written according to the KISS ( Keep It Simple &amp; Straightforward) principle. The library leans heavily on the STL for keeping its implementation as simple as its usage, and tries to provide C++ developers with a light-weight, paradigm-pure and flexible alternative to logging libraries that use design and/or implementation decisions that at least the author of LibKISSlog believes to be questionable.</p>
 <h2>Using libKISSlog</h2>
 <h3>Header and statics.</h3>
 If your application is to be a single threaded application, 
@@ -306,11 +297,8 @@ any library that leaks memory.
 <h3>Support for syslog on POSIX systems</h3>
 On production server software running on POSIX systems, the convention for logging is to use syslog. If your code targets these
 types of systems you will want a logging library like libKISSlog that supports logging to syslog.
-<h3>Why NOT choose libKISSlog</h3>
+<h3>Why NOT choose libKISSlog and alternative libraries.</h3>
 Next to reasons why you may want to use libKISSlog for your project, there are also reasons why this library may not be the right solution for you.
-<h4>Cross platform support untested.</h4>
-Currently this library has only been tested on POSIX systems. If you want a library for windows that has actually been tested on the windows platform,
-than libKISSlog may not be the library for you.
 <h4>No asynchonous logging</h4>
 If you have a system with many concurent threads, the overhead of synchonous metaphor based logging may become a
 serious bottleneck. Currently libKISSlog does not support the more efficient actor model based asynchonous logging model
@@ -326,12 +314,12 @@ nothing like Log4J. If this is the case, there are quite a few bloated Log4J lib
 <h4>Inner loop logging</h4>
 If you do feel inner loop logging is esential, and the use of #ifdef is a non solution, than libKISSlog is not what you want. 
 You may like a logging library like <A HREF="http://www.pantheios.org/">Pantheios</A> instead.
-<h4>std::streambuf can be enough</h4>
+<h4>You may not actually need a full blown logging library.</h4>
 If you look at the implementation of libKISSlog you will see that although it has a great list of features, its actually a quite simple 
 library. The reason for this is that it makes use of what the STL has to offer, most notably the use of an subclassing of
 std::streambuf. When your logging demands are very specific, than although libKISSlog is prety light, it may be overkill still.
 You may just want to look at the libKISSlog sources and create your own simple and tailored logging library using these
-STL facilities yourself.
+STL facilities yourself. 
         </section>
 
         <footer>
