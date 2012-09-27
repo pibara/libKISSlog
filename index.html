@@ -213,7 +213,10 @@ warnlogger.debug() invocation will return a null stream. The zero argument loggi
 
 <h3>Passing loggers around</h3>
 
-<p>The libKISSlog API does out of principle not supply any singleton interface and does not use any kind of global mutable state under the hood. Instead, libKISSlog promotes the use of constructor based dependency injection. To accomodate this, any concrete kisslog::logger class is a subclass of the abstract <em>kisslog::logger_base</em> class. This basically allows for constructs like:</p>
+<p>The libKISSlog API does out of principle not supply any singleton interface and does not use any kind of global mutable state under the hood.
+Instead, libKISSlog promotes the use of constructor based dependency injection. 
+To accomodate this, any concrete kisslog::logger class is a subclass of the abstract <em>kisslog::logger_base</em> class. 
+This basically allows for constructs like:</p>
 
 <pre><code>class Foo {
     kisslog::logger_base &amp;mLogger;
@@ -230,7 +233,10 @@ Foo foo(warnlogger);
 foo.testlog();
 </code></pre>
 
-<p>Note that Foo does not need to know what type of logger its being passed here. This also, next to making dependencies more explicit (what is good), allows for flexibility in what level of logging is used by what sub systems without using bloated Log4J style frameworks, simply by passing different loggers (with different minimum log levels) to the constructors of the different sub-systems:</p>
+<p>Note that Foo does not need to know what type of logger its being passed here. This also, 
+next to making dependencies more explicit (what is good), allows for flexibility in what level of logging is used 
+by what sub systems without using bloated Log4J style frameworks, simply by passing different loggers 
+(with different minimum log levels) to the constructors of the different sub-systems:</p>
 
 <pre><code>Foo foo(warnlogger);
 Bar bar(debuglogger);
@@ -240,6 +246,16 @@ bar.testlog();
 </code></pre>
 
 <p>In the above situation, foo will not log any DEBUG, INFO or NOTICE level log lines, while bar will.</p>
+<h4>Don't like constructor injection?</h4>
+While the author of libKISSlog believes that singletons and other types of global mutable state are to be 
+avoided at all cost within any software project that aims to create robust, testable and trustworthy software,
+there is a chance that you as a (potential) libKISSlog user either don't care about robustness, testability 
+or trustworthyness of your software or dont agree with my assertions. If so, you may wish to have a look at the 
+<A href="http://loki-lib.sourceforge.net/">loki library</A>. The loki library contains the facilities thay you may 
+use to create singleton access to a libKISSlog logger. The use of singletons is discouraged, but if you insist on
+shooting yourself in the foot by introducing excesive global mutable state into your code-base, than using loki 
+would seem like a way to do that. 
+
 <h2 id="choose">Why choose libKISSlog?</h2>
 There are many C++ and C logging libraries around, so why would you pick libKISSlog and not one of the other ones, 
 or do you need a logging library at all, or could you suffice just using the facilities that the STL already offers?
@@ -303,11 +319,6 @@ Next to reasons why you may want to use libKISSlog for your project, there are a
 If you have a system with many concurent threads, the overhead of synchonous metaphor based logging may become a
 serious bottleneck. Currently libKISSlog does not support the more efficient actor model based asynchonous logging model
 that is suitable for highly concurent applications. If asynchonous logging is esential, you may want to look at <A HREF="https://sites.google.com/site/kjellhedstrom2/g2log-efficient-background-io-processign-with-c11">g2log</A>.
-<h3>Not for singleton pattern fans.</h3>
-If you are part of the large group of C++ developers the use of singletons and other similar shared mutable state 
-techniques are simply a fact of life. Adding a loggin library to the mix that <i>demands</i> the use of constructor
-based dependency injection may simply be to painstaking for you for libKISSlog to be of practical use. If this 
-happens to be the case, you have a wide range of alternative libraries that provide logging in the global namespace.
 <h3>Not for Log4J fans</h3>
 If you have a Java background and <i>LOVE</i> Log4J, than libKISSlog will bring great sorow for you. The libKISSlog library is absolutely 
 nothing like Log4J. If this is the case, there are quite a few bloated Log4J libraries you can choose from, including apaches <A HREF="http://logging.apache.org/log4cxx/">Log4Cxx</A>.
