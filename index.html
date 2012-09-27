@@ -299,12 +299,12 @@ On production server software running on POSIX systems, the convention for loggi
 types of systems you will want a logging library like libKISSlog that supports logging to syslog.
 <h2>Why NOT choose libKISSlog and alternative libraries.</h2>
 Next to reasons why you may want to use libKISSlog for your project, there are also reasons why this library may not be the right solution for you.
-<h3>No asynchonous logging</h3>
+<h3>No built-in asynchonous logging</h3>
 If you have a system with many concurent threads, the overhead of synchonous metaphor based logging may become a
 serious bottleneck. Currently libKISSlog does not support the more efficient actor model based asynchonous logging model
 that is suitable for highly concurent applications. If asynchonous logging is esential, you may want to look at <A HREF="https://sites.google.com/site/kjellhedstrom2/g2log-efficient-background-io-processign-with-c11">g2log</A>.
-<h3>No singletons may hurt</h3>
-If you are part of thelarge group of C++ developers the use of singletons and other similar shared mutable state 
+<h3>Not for lovers of singletons.</h3>
+If you are part of the large group of C++ developers the use of singletons and other similar shared mutable state 
 techniques are simply a fact of life. Adding a loggin library to the mix that <i>demands</i> the use of constructor
 based dependency injection may simply be to painstaking for you for libKISSlog to be of practical use. If this 
 happens to be the case, you have a wide range of alternative libraries that provide logging in the global namespace.
