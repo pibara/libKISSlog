@@ -297,24 +297,24 @@ any library that leaks memory.
 <h3>Support for syslog on POSIX systems</h3>
 On production server software running on POSIX systems, the convention for logging is to use syslog. If your code targets these
 types of systems you will want a logging library like libKISSlog that supports logging to syslog.
-<h3>Why NOT choose libKISSlog and alternative libraries.</h3>
+<h2>Why NOT choose libKISSlog and alternative libraries.</h2>
 Next to reasons why you may want to use libKISSlog for your project, there are also reasons why this library may not be the right solution for you.
-<h4>No asynchonous logging</h4>
+<h3>No asynchonous logging</h3>
 If you have a system with many concurent threads, the overhead of synchonous metaphor based logging may become a
 serious bottleneck. Currently libKISSlog does not support the more efficient actor model based asynchonous logging model
 that is suitable for highly concurent applications. If asynchonous logging is esential, you may want to look at <A HREF="https://sites.google.com/site/kjellhedstrom2/g2log-efficient-background-io-processign-with-c11">g2log</A>.
-<h4>No singletons may hurt</h4>
+<h3>No singletons may hurt</h3>
 If you are part of thelarge group of C++ developers the use of singletons and other similar shared mutable state 
 techniques are simply a fact of life. Adding a loggin library to the mix that <i>demands</i> the use of constructor
 based dependency injection may simply be to painstaking for you for libKISSlog to be of practical use. If this 
 happens to be the case, you have a wide range of alternative libraries that provide logging in the global namespace.
-<h4>Nothing like Log4J</h4>
+<h3>Nothing like Log4J</h3>
 If you have a Java background and <i>LOVE</i> Log4J, than libKISSlog will bring great sorow for you. The libKISSlog library is absolutely 
 nothing like Log4J. If this is the case, there are quite a few bloated Log4J libraries you can choose from, including apaches <A HREF="http://logging.apache.org/log4cxx/">Log4Cxx</A>.
-<h4>Inner loop logging</h4>
+<h3>Inner loop logging</h3>
 If you do feel inner loop logging is esential, and the use of #ifdef is a non solution, than libKISSlog is not what you want. 
 You may like a logging library like <A HREF="http://www.pantheios.org/">Pantheios</A> instead.
-<h4>You may not actually need a full blown logging library.</h4>
+<h3>You may not actually need a full blown logging library.</h3>
 If you look at the implementation of libKISSlog you will see that although it has a great list of features, its actually a quite simple 
 library. The reason for this is that it makes use of what the STL has to offer, most notably the use of an subclassing of
 std::streambuf. When your logging demands are very specific, than although libKISSlog is prety light, it may be overkill still.
