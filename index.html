@@ -63,100 +63,133 @@ This file contains a single static definition that is needed in multi threaded o
 
 <pre><code>typedef kisslog::threading::MULTI concurrency_mode_t</code></pre>
 
-<h3>Writing your own raw logger.</h3>
+<h3>Typedeffing and instantiating your raw logger</h3>
+The first thing you will need to do when using libKISSlog is to choose and typedef a propper raw logger. Alternatively you may define your own raw logger, but libKISSlog also comes with two built-in raw loggers that might suite your needs.
+<h4>Typedeffing a syslog raw logger</h4>
+If your software targets only POSIX (Linux,*BSD,*NIX,etc) systems and not for example MS-Windows, and your software is meant to be
+some kind of back-end, server, appliance or other type of daemon type software, than the syslog raw logger is probably most
+ suited to your needs. In order to use a syslog logger as our raw logger we shall define a typedef for it.
+ 
+<pre><code>typedef kisslog::rawlogger::sysloglogger&lt;kisslog::facility::USER,concurency_mode_t&gt; raw_logger_t</code></pre>
+ 
+Note that this typedef uses two template parameters. The first template parameter is the so called syslog <i>facility</i> that the rawlogger should use. 
+The libKISSlog library defines USER,DAEMON and LOCAL0 .. LOCAL7 as valid facilities for the syslog raw logger. Have a look at the syslog manual to determine 
+what facility is most suited for your program. The second template argument is the threading mode that the raw logger should use.
+It is sugested that you always use the raw_logger_t typedef that you defined for your program so you can switch concurency mode in just a single place.
 
-<p>The first thing you will want to do when using LibKISSlog is determine if you ont to use one of the two packaged raw loggers, or if you want to provide your own. Lets first assume you want full control and want to do things the harder (yet still simple) way, and want to build your own raw logger in order to fully control the output of your logger. </p>
+In your program you can than instantiate your raw logger:
 
-<p>A raw logger can either be a normal class or a template class that implements a <em>log</em> template method. LibKISSlog defines a set of log level classes that are to be used by libKISSlog as template parameters for the <em>log</em> method of the raw logger. These classes have two class methods that you may choose to use when writing your own raw logger:</p>
+<pre><code>raw_logger_t rawlogger("demo")</code></pre>
 
-<ul>
-<li>
-<em>asPrefix()</em> : This class method returns a string containing the name of the log level.</li>
-<li>
-<em>asSyslogLevel()</em> : This class method returns an integer representing the log level as a syslog API compatible integer representation. </li>
-</ul><p>Here would be an example of a dumb and useless raw logger that logs to cerr with a line number prepended:</p>
+Depending on your system syslog configuration, the constructor argument may be used as a prefix for all your log messages.
 
-<pre><code>class myrawlogger {
+<h4>Typedeffing the ostream raw logger</h4>
+If the syslog raw logger is not suitable for your needs and your logging needs don't require wide string support, than alternatively
+the ostream raw logger may be an option for you. A typedef for an ostream raw logger would look something like:
+<pre><code>typedef kisslog::rawlogger::ostreamlogger&lt;concurrency_mode_t&gt; rawlogger_t;</code></pre>
+
+Again we use the concurrency_mode_t as template parameter in our typedef for the rawlogger_t.
+
+In your program you can than instantiate your raw logger:
+
+<pre><code>rawlogger rlogger(std::cerr);</code></pre>
+
+This example uses std::cerr as output stream, but you could use any ostream, for example for logging to a file or a network socket.
+
+<h4>Writing your own raw logger.</h4>
+<p>If neither of the two built-in raw loggers are suitable for your logging needs, for example you may not like the formatting it does or you might want to log wide strings, 
+than writing up your own raw logger class might be needed. Doing so shall give you full control at the price of being a litle bit work to implement.</p>
+
+<p>A raw logger can either be a normal class or a template class that implements a <em>log</em> template method. LibKISSlog defines a set of log levels that are to be used by libKISSlog as template parameters for the <em>log</em> method of the raw logger. 
+</p>
+
+<p>Here would be an example of a dumb and useless raw logger that logs to cerr with a line number prepended:</p>
+
+<pre><code>class rawlogger_t {
        size_t mLineno;
    public:
-       myrawlogger():mLineNo(0){}
+       rawlogger_t():mLineNo(0){}
        template &lt;typename T&gt;
-       void log(std::string line) {
+       void log(<b>std::string</b> line) {
           mLineno++;
-          std::cerr &lt;&lt; mLineNo &lt;&lt; ":" &lt;&lt; T::asPrefix() &lt;&lt; line;
+          std::cerr &lt;&lt; mLineNo &lt;&lt; ":" &lt;&lt; kisslog::severity::asPrefix&lt;T,<b>char</b>&gt;() &lt;&lt; line;
        }
 };
 </code></pre>
 
+<p>One point of interest in the above code is the usage of <i>kisslog::severity::asPrefix&lt;T,char&gt;()</i>. This basically returns a string representation 
+  of the severity level <i>T</i>.
+</p>
+<h5>threading</h5>
 <p>Note that if you write a raw logger that you want to re-use in several projects, especially if you are using thread-unsafe API calls and want to be able to re-use your custom raw logger in both single threaded and multi threaded application, it is sugested that you implement your raw logger as a template class basically like this:</p>
 
 <pre><code>template &lt;typename G&gt;
-class base_myrawlogger {
+class base_rawlogger_t {
        size_t mLineno;
    public:
-       base_myrawlogger():mLineNo(0){}
+       base_rawlogger_t():mLineNo(0){}
        template &lt;typename T&gt;
-       void log(std::string line) {
+       void log(<b>std::string</b> line) {
           threading::guard_if_needed&lt;G&gt; myguard;
           mLineno++;
-          std::cerr &lt;&lt; mLineNo &lt;&lt; ":" &lt;&lt; T::asPrefix() &lt;&lt; line;
+          std::cerr &lt;&lt; mLineNo &lt;&lt; ":" &lt;&lt; kisslog::severity::asPrefix&lt;T,<b>char</b>&gt;() &lt;&lt; line;
        }
 };
+
+typedef base_rawlogger_t&lt;concurency_mode_t&gt; rawlogger_t;
 </code></pre>
 
-<p>Now before you instantiate your logger its a good idea to create a typedef approprite for your program. If you are working on a single threaded program you would say:</p>
+<p>Now before you instantiate your logger its a good idea to create a typedef approprite for your program:</p>
 
-<pre><code>typedef base_myrawlogger&lt;kisslog::threading::SINGLE&gt; myrawlogger;
+<pre><code>typedef base_myrawlogger&lt;concurrency_mode_t&gt; myrawlogger;
+</code></pre>
+<h5>wide string support</h5>
+Next to supporting multiple concurency modes you might have an application that uses wide strings instead of char based strings.
+To accomodate this, libKISSlog, while not supplying wide string based built-in raw loggers, does make it trivial to write
+your own. Lets look what a wide string version of our previous raw logger looks like:
+
+<pre><code>template &lt;typename G&gt;
+class base_rawlogger_t {
+       size_t mLineno;
+   public:
+       base_rawlogger_t():mLineNo(0){}
+       template &lt;typename T&gt;
+       void log(<b></b>std::wstring</b> line) {
+          threading::guard_if_needed&lt;G&gt; myguard;
+          mLineno++;
+          std::cerr &lt;&lt; mLineNo &lt;&lt; ":" &lt;&lt; kisslog::severity::asPrefix&lt;T,<b>wchar_t</b>&gt;() &lt;&lt; line;
+       }
+};
+typedef base_rawlogger_t&lt;concurency_mode_t&gt; rawlogger_t;
 </code></pre>
 
-<p>While in a multi-threaded project you would use:</p>
 
-<pre><code>typedef base_myrawlogger&lt;kisslog::threading::MULTI&gt; myrawlogger;
-</code></pre>
+<h3>Typedeffing and instantiating our real logger</h3>
 
-<p>The idea behind this is that when you don't <em>need</em> thread-safety, than you don't pay any performance penalty for it either.</p>
-
-<h3>Using the syslog raw logger</h3>
-
-<p>While the flexibility of writing your own raw logging is great, often you will just want to get the show on the road quickly and you would thus like to settle for one of the two raw loggers that come with libKISSlog. The first of these is <em>kisslog::rawlogger::sysloglogger</em>. Just as we did with our own raw logger, you will want to create an appropriate typedef for your raw logger. Note that the sysloglogger raw logger template takes an additional template parameter: the <em>facility</em>. LibKISSlog defines a set of parameter classes for picking the facility that is a subset of the facilities defined by syslog. So basically next to picking single or multi threading, the typedef also picks the facility you will be using. An example typedef could be:</p>
-
-<pre><code>typedef kisslog::rawlogger::sysloglogger&lt;
-          kisslog::facility::USER,
-          kisslog::threading::SINGLE
-        &gt; syslograwlogger;
-</code></pre>
-
-<p>This typedef defines the type syslograwlogger to be a raw non thread-safe syslog logger that logs to the <em>USER</em> syslog facility.</p>
-
-<h3>Using the ostream raw logger</h3>
-
-<p>While on most systems that support syslog you will probably want to use the syslog logger in production, on Windows systems and on your development environment its likely you will often want to log to either a file or the standard output or error stream. To facilitate this, libKISSlog defines a simple raw logger for logging to a wrapped ostream. Like our example and like the syslog raw logger, the <em>kisslog::rawlogger::ostreamlogger</em> raw logger takes a threading related template parameter. Again we will thus want to use a typedef to define the apropriate type for our raw logger for our project.</p>
-
-<pre><code>typedef kisslog::rawlogger::ostreamlogger&lt;
-          kisslog::threading::SINGLE
-        &gt; ostreamrawlogger;
-</code></pre>
-
-<h3>Typedeffing our real logger</h3>
-
-<p>So far all we've basically done is defining a type for a raw logger that should be used by our actual logger. Before we can instantiate our raw logger and use it to instantiate a real logger, there remains one thing to do. We need to also typedef a shorthand type for our actual logger.
-The <em>kisslog::logger</em> class template takes two template arguments. The first template argument is the type of the raw logger we just defined. The second template argument is the <em>minimal</em> log level for this logger for what log lines will actually get logged. This last template parameter basically implies that you can switch between doing fully verbose debug logging and logging that only does WARNING and above by changing a typedef. A real logger typedef may look something like:</p>
+<p>So far all we've basically done is defining a type for and instantiating a raw logger that should be used by our 
+actual logger. 
+The <em>kisslog::logger</em> class template takes 1 to 3 template arguments. The first template argument is the type of 
+the raw logger. The second template argument is the <em>minimal</em> log level for this logger for 
+what log lines will actually get logged. This second template parameter basically implies that you can switch between 
+doing fully verbose debug logging and logging that only does WARNING and above by changing a typedef. The default level is WARNING.
+The third and last template argument is the character type this logger is for. This type should match the type used for the
+creation of the raw logger.
+A real logger typedef may look something like:</p>
 
 <pre><code>typedef kisslog::logger&lt;
-          myrawlogger,
-          kisslog::severity::WARNING
-        &gt; mywarnlogger;
+          raw_logger_t,
+          kisslog::severity::WARNING,
+          wchar_t
+        &gt; warnlogger_t;
 </code></pre>
-
-<h3>Instantiating and using the loggers</h3>
 
 <p>Now that we have our typedefs in order (myrawlogger and warnlogger), we can instantiate our logger and use it.</p>
 
 <pre><code>myrawlogger rawlogger;
-mywarnlogger warnlogger(rawlogger);
+warnlogger_t warnlogger(rawlogger);
 ..
-warnlogger.err() &lt;&lt; "Logging is simple " &lt;&lt; 42 &lt;&lt; std::endl;
-warnlogger.debug() &lt;&lt; "This line won't be logged." &lt;&lt; std::endl;
+warnlogger.err() &lt;&lt; L"Logging is simple " &lt;&lt; 42 &lt;&lt; std::endl;
+warnlogger.debug() &lt;&lt; L"This line won't be logged." &lt;&lt; std::endl;
 </code></pre>
 
 <p>The logger defines a small set of methods, one for each log level, that all return an ostream reference.
@@ -267,9 +300,6 @@ Next to reasons why you may want to use libKISSlog for your project, there are a
 <h4>Cross platform support untested.</h4>
 Currently this library has only been tested on POSIX systems. If you want a library for windows that has actually been tested on the windows platform,
 than libKISSlog may not be the library for you.
-<h4>No wchar support (yet)</h4>
-On windows, support for wchar based output may be crucial. Currently libKISSlog does not support wchar logging. If wchar logging
-is essential, you may want to look at the <A HREF="http://boost-log.sourceforge.net/libs/log/doc/html/index.html">boost log library</A>.
 <h4>No asynchonous logging</h4>
 If you have a system with many concurent threads, the overhead of synchonous metaphor based logging may become a
 serious bottleneck. Currently libKISSlog does not support the more efficient actor model based asynchonous logging model
