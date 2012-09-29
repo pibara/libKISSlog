@@ -34,24 +34,25 @@
 #include <iostream>
 
 namespace kisslog {
-  template <typename L,typename C,typename traits=std::char_traits<C> >
-  class nullstreambuf : public std::basic_streambuf<C,traits > {
+  //Streambuff implementation for null streams.
+  template <typename RawloggerType,typename CharType,typename traits=std::char_traits<CharType> >
+  class nullstreambuf : public std::basic_streambuf<CharType,traits > {
       public:
-        nullstreambuf(L &){}
+        nullstreambuf(RawloggerType &){}
         typename traits::int_type overflow(typename traits::int_type c) { return c; }
   };
   //A simple streambuf for any raw logger. Makes  things line oriented and cuts of lines at
   //some maximum length.
-  template <typename L,severity::Severity S,typename C,typename traits=std::char_traits<C> >
-  class logstreambuf : public std::basic_streambuf<C,traits> {
-      L &mLogger;
-      C data[256];
+  template <typename RawloggerType,severity::Severity SeverityVal,typename CharType,typename traits=std::char_traits<CharType> >
+  class logstreambuf : public std::basic_streambuf<CharType,traits> {
+      RawloggerType &mLogger;
+      CharType data[256];
       size_t index;
-      util::CharUtil<C> charutil;
+      util::CharUtil<CharType> charutil;
     public:
-      using std::basic_streambuf<C,traits>::setp;
-      using std::basic_streambuf<C,traits>::setg;
-      logstreambuf(L &logger):mLogger(logger),index(0),charutil(){
+      using std::basic_streambuf<CharType,traits>::setp;
+      using std::basic_streambuf<CharType,traits>::setg;
+      logstreambuf(RawloggerType &logger):mLogger(logger),index(0),charutil(){
         setp(0,0);
         setg(0,0,0);
       }
@@ -65,63 +66,63 @@ namespace kisslog {
             (index == 255) || 
             (c == traits::eof())) {
           data[index]=0;
-          mLogger.template log<S>(std::basic_string<C,traits>(data));
+          mLogger.template log<SeverityVal>(std::basic_string<CharType,traits>(data));
           index=0;
         }
         if (c != traits::eof()) return 0;
           return c;
       }
   };
-
+  
   template<bool C,typename T1,typename T2> struct if_c {
       typedef T1 type;
   };
   template<typename T1,typename T2> struct if_c<false,T1,T2> {
       typedef T2 type;
   };
-  template <typename L,severity::Severity SbSeverity,severity::Severity ChosenSeverity,typename C>
+  template <typename RawloggerType,severity::Severity SbSeverity,severity::Severity ChosenSeverity,typename CharType>
   struct streambuf_selector { // nullstreambuf is used when streambuf severity greater than chosen severity
-      typedef typename if_c< (SbSeverity<=ChosenSeverity), logstreambuf<L,SbSeverity,C>, nullstreambuf<L,C> >::type type;
+      typedef typename if_c< (SbSeverity<=ChosenSeverity), logstreambuf<RawloggerType,SbSeverity,CharType>, nullstreambuf<RawloggerType,CharType> >::type type;
   };
  
   //To give the logging lib a friendly API, we define a common abstract basecalass for all loggers.
   //This should allow passing a logger reference to the constructor of client classes without hooking those
   //client classes into our template hyrarchy.
-  template <typename C=char>
+  template <typename CharType=char>
   struct logger_base {
-     virtual std::basic_ostream<C> &debug()=0;
-     virtual std::basic_ostream<C> &info()=0;
-     virtual std::basic_ostream<C> &notice()=0;
-     virtual std::basic_ostream<C> &warning()=0;
-     virtual std::basic_ostream<C> &err()=0;
-     virtual std::basic_ostream<C> &crit()=0;
-     virtual std::basic_ostream<C> &alert()=0;
-     virtual std::basic_ostream<C> &emerg()=0;
+     virtual std::basic_ostream<CharType> &debug()=0;
+     virtual std::basic_ostream<CharType> &info()=0;
+     virtual std::basic_ostream<CharType> &notice()=0;
+     virtual std::basic_ostream<CharType> &warning()=0;
+     virtual std::basic_ostream<CharType> &err()=0;
+     virtual std::basic_ostream<CharType> &crit()=0;
+     virtual std::basic_ostream<CharType> &alert()=0;
+     virtual std::basic_ostream<CharType> &emerg()=0;
      virtual ~logger_base(){}
   };
 
   //The actual logger.
-  template <typename R,severity::Severity S=severity::WARNING,typename C=char>
-  class logger: public logger_base<C> {
-    R &mRawLogger;
-    typename streambuf_selector<R,severity::DEBUG,S,C>::type mDebugSb;
-    std::basic_ostream<C> mDebugStream;
-    typename streambuf_selector<R,severity::INFO,S,C>::type mInfoSb;
-    std::basic_ostream<C> mInfoStream;
-    typename streambuf_selector<R,severity::NOTICE,S,C>::type mNoticeSb;
-    std::basic_ostream<C> mNoticeStream;
-    typename streambuf_selector<R,severity::WARNING,S,C>::type mWarningSb;
-    std::basic_ostream<C> mWarningStream;
-    typename streambuf_selector<R,severity::ERR,S,C>::type mErrSb;
-    std::basic_ostream<C> mErrStream;
-    typename streambuf_selector<R,severity::CRIT,S,C>::type mCritSb;
-    std::basic_ostream<C> mCritStream;
-    typename streambuf_selector<R,severity::ALERT,S,C>::type mAlertSb;
-    std::basic_ostream<C> mAlertStream;
-    typename streambuf_selector<R,severity::EMERG,S,C>::type mEmergSb;
-    std::basic_ostream<C> mEmergStream;
+  template <typename RawloggerType,severity::Severity Severity=severity::WARNING,typename CharType=char>
+  class logger: public logger_base<CharType> {
+    RawloggerType &mRawLogger;
+    typename streambuf_selector<RawloggerType,severity::DEBUG,Severity,CharType>::type mDebugSb;
+    std::basic_ostream<CharType> mDebugStream;
+    typename streambuf_selector<RawloggerType,severity::INFO,Severity,CharType>::type mInfoSb;
+    std::basic_ostream<CharType> mInfoStream;
+    typename streambuf_selector<RawloggerType,severity::NOTICE,Severity,CharType>::type mNoticeSb;
+    std::basic_ostream<CharType> mNoticeStream;
+    typename streambuf_selector<RawloggerType,severity::WARNING,Severity,CharType>::type mWarningSb;
+    std::basic_ostream<CharType> mWarningStream;
+    typename streambuf_selector<RawloggerType,severity::ERR,Severity,CharType>::type mErrSb;
+    std::basic_ostream<CharType> mErrStream;
+    typename streambuf_selector<RawloggerType,severity::CRIT,Severity,CharType>::type mCritSb;
+    std::basic_ostream<CharType> mCritStream;
+    typename streambuf_selector<RawloggerType,severity::ALERT,Severity,CharType>::type mAlertSb;
+    std::basic_ostream<CharType> mAlertStream;
+    typename streambuf_selector<RawloggerType,severity::EMERG,Severity,CharType>::type mEmergSb;
+    std::basic_ostream<CharType> mEmergStream;
   public: 
-    logger(R &sl):mRawLogger(sl),mDebugSb(mRawLogger),mDebugStream(&mDebugSb),
+    logger(RawloggerType &sl):mRawLogger(sl),mDebugSb(mRawLogger),mDebugStream(&mDebugSb),
                                  mInfoSb(mRawLogger),mInfoStream(&mInfoSb),
                                  mNoticeSb(mRawLogger),mNoticeStream(&mNoticeSb),
                                  mWarningSb(mRawLogger),mWarningStream(&mWarningSb),
@@ -130,14 +131,14 @@ namespace kisslog {
                                  mAlertSb(mRawLogger),mAlertStream(&mAlertSb),
                                  mEmergSb(mRawLogger),mEmergStream(&mEmergSb)
                                  {}
-    std::basic_ostream<C> &debug() {return mDebugStream;}
-    std::basic_ostream<C> &info() {return mInfoStream;}
-    std::basic_ostream<C> &notice() {return mNoticeStream;}
-    std::basic_ostream<C> &warning() {return mWarningStream;}
-    std::basic_ostream<C> &err() {return mErrStream;}
-    std::basic_ostream<C> &crit() {return mCritStream;}
-    std::basic_ostream<C> &alert() {return mAlertStream;}
-    std::basic_ostream<C> &emerg() {return mEmergStream;}
+    std::basic_ostream<CharType> &debug() {return mDebugStream;}
+    std::basic_ostream<CharType> &info() {return mInfoStream;}
+    std::basic_ostream<CharType> &notice() {return mNoticeStream;}
+    std::basic_ostream<CharType> &warning() {return mWarningStream;}
+    std::basic_ostream<CharType> &err() {return mErrStream;}
+    std::basic_ostream<CharType> &crit() {return mCritStream;}
+    std::basic_ostream<CharType> &alert() {return mAlertStream;}
+    std::basic_ostream<CharType> &emerg() {return mEmergStream;}
   };
 }
 #endif

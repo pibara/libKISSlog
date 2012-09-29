@@ -33,7 +33,7 @@ namespace kisslog {
     enum Severity {// Numerical codes are from RFC-5424
         EMERG=0, ALERT=1, CRIT=2, ERR=3, WARNING=4, NOTICE=5, INFO=6, DEBUG=7
     };
-    template<Severity,typename C> inline std::basic_string<C> asPrefix();
+    template<Severity,typename CharType> inline std::basic_string<CharType> asPrefix();
     template<> inline std::basic_string<char> asPrefix<EMERG,char>(){ return "EMERG"; }
     template<> inline std::basic_string<char> asPrefix<ALERT,char>(){ return "ALERT"; }
     template<> inline std::basic_string<char> asPrefix<CRIT,char>(){ return "CRIT"; }

@@ -34,24 +34,22 @@
 
 namespace kisslog {
   namespace rawlogger {
-    template <typename F,typename G,typename C=char>
-    class sysloglogger;
-    template <typename F,typename G>
-    class sysloglogger<F,G,char> {
+    template <typename FacilityType,typename GuardNeededType>
+    class sysloglogger {
         std::basic_string<char> mIdent;
         util::CharUtil<char> charutil;
       public:
         sysloglogger(std::basic_string<char> ident):mIdent(ident),charutil() {
-          openlog(mIdent.c_str(),LOG_PID, F::asSyslogFacility());    
+          openlog(mIdent.c_str(),LOG_PID, FacilityType::asSyslogFacility());    
         } 
         ~sysloglogger() {
            closelog();
         }
 
-        template <severity::Severity S>
-        void log(std::basic_string<char> line) {
-           threading::guard_if_needed<G> myguard;
-           syslog(S,"%s",(severity::asPrefix<S,char>() + charutil.sp_col_sp() + line).c_str());
+        template <severity::Severity SeverityVal>
+        void log(std::string line) {
+           threading::guard_if_needed<GuardNeededType> myguard;
+           syslog(SeverityVal,"%s",(severity::asPrefix<SeverityVal,char>() + charutil.sp_col_sp() + line).c_str());
         }
     };
   }

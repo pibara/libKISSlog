@@ -36,16 +36,16 @@
 namespace kisslog {
   //Some raw loggers, well one actually, currently.There is only a syslog raw logger now but we could add a stream logger here maybe.
   namespace rawlogger {
-    template <typename G, typename C=char>
+    template <typename GuardNeededType, typename CharType=char>
     class ostreamlogger {
-        std::basic_ostream<C> &mStream;
-        util::CharUtil<C> charutil;
+        std::basic_ostream<CharType> &mStream;
+        util::CharUtil<CharType> charutil;
       public:
-        ostreamlogger(std::basic_ostream<C> &stream):mStream(stream),charutil() {}
-        template <severity::Severity S>
-        void log(std::basic_string<C> line) {
-           threading::guard_if_needed<G> myguard;
-           mStream << charutil.now() << charutil.sp_col_sp() << severity::asPrefix<S,C>() << charutil.sp_col_sp() << line;
+        ostreamlogger(std::basic_ostream<CharType> &stream):mStream(stream),charutil() {}
+        template <severity::Severity SeverityVal>
+        void log(std::basic_string<CharType> line) {
+           threading::guard_if_needed<GuardNeededType> myguard;
+           mStream << charutil.now() << charutil.sp_col_sp() << severity::asPrefix<SeverityVal,CharType>() << charutil.sp_col_sp() << line;
         }
     };
   }

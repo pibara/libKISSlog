@@ -95,7 +95,7 @@ namespace kisslog {
   };
 #endif
 #endif
-    template <typename T>
+    template <typename ThreadingType>
     class guard_if_needed {};
     template <>
     class guard_if_needed <MULTI> {

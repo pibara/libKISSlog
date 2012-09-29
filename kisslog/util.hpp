@@ -30,7 +30,7 @@
 
 namespace kisslog {
   namespace util {
-    template <typename C>    
+    template <typename CharType>    
     struct CharUtil; 
     template <>
     struct CharUtil<char> {
