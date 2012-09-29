@@ -1,5 +1,5 @@
 //  Copyright (c) 2012, Rob J Meijer
-//
+//  Copyright (c) 2012, Evgeny Panasyuk
 //
 //Permission is hereby granted, free of charge, to any person or organization
 //obtaining a copy of the software and accompanying documentation covered by
@@ -25,235 +25,15 @@
 
 #ifndef KISSLOG_HPP
 #define KISSLOG_HPP
-#ifndef WIN32
-#include <syslog.h>
-#endif
-
-#if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
-#include <mutex>
-#else
-#ifndef WIN32
-#include <pthread.h>
-#else 
-#include <windows.h>
-#endif
-#endif
-
-#include <string.h>
+#include <kisslog/util.hpp>
+#include <kisslog/concurrency.hpp>
+#include <kisslog/severity.hpp>
+#include <kisslog/rawlogger.hpp>
 #include <string>
 #include <streambuf>
 #include <iostream>
-#include <ctime>
 
 namespace kisslog {
-  //An list of syslog facilities as simple classes. Note that these are not all possible
-  //facilities, just the one a typical user space program will be using.
-#ifndef WIN32
-  namespace facility {
-    struct DAEMON {
-      static int asSyslogFacility() {
-        return LOG_DAEMON;
-      }
-    };
-    struct LOCAL0 {
-      static int asSyslogFacility() {
-        return LOG_LOCAL0;
-      }
-    };
-    struct LOCAL1 {
-      static int asSyslogFacility() {
-        return LOG_LOCAL1;
-      }
-    };
-    struct LOCAL2 {
-      static int asSyslogFacility() {
-        return LOG_LOCAL2;
-      }
-    };
-    struct LOCAL3 {
-      static int asSyslogFacility() {
-        return LOG_LOCAL3;
-      }
-    };
-    struct LOCAL4 {
-      static int asSyslogFacility() {
-        return LOG_LOCAL4;
-      }
-    };
-    struct LOCAL5 {
-      static int asSyslogFacility() {
-        return LOG_LOCAL5;
-      }
-    };
-    struct LOCAL6 {
-      static int asSyslogFacility() {
-        return LOG_LOCAL6;
-      }
-    };
-    struct LOCAL7 {
-      static int asSyslogFacility() {
-        return LOG_LOCAL7;
-      }
-    };
-    struct USER {
-      static int asSyslogFacility() {
-        return LOG_USER;
-      }
-    }; 
-  }
-  namespace util {
-    template <typename C>    
-    struct CharUtil; 
-    template <>
-    struct CharUtil<char> {
-      std::char_traits<char>::int_type newline() { return '\n';}
-      std::basic_string<char> sp_col_sp() { return " : "; }
-      std::basic_string<char> now() {
-         time_t ctt = time(0);
-         std::basic_string<char> timestring=asctime(localtime(&ctt));
-         timestring=timestring.substr(0,timestring.size()-1);
-         return timestring;
-      }
-    };
-    template <>
-    struct CharUtil<wchar_t> {
-      std::char_traits<wchar_t>::int_type newline() { return L'\n';}
-      std::basic_string<wchar_t> sp_col_sp() { return L" : "; }
-      //FIXME: we need a wchar_t 'now()' definition also!.
-    };
-
-  }
-  
-#endif
-  //Some helper classes for allowing multi threading (in a crude way) only when needed.
-  namespace threading {
-    struct SINGLE{};
-    struct MULTI{};
-#if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
-    class guard {
-        static std::mutex mGlobalMutex; 
-      public:
-        guard() {
-          mGlobalMutex.lock();
-        }
-        ~guard() {
-          mGlobalMutex.unlock();
-        }       
-    };
-#else
-#ifndef WIN32
-    class guard {
-        static pthread_mutex_t mGlobalMutex; 
-      public:
-        guard() {
-          pthread_mutex_lock(&mGlobalMutex);
-        }
-        ~guard() {
-          pthread_mutex_unlock(&mGlobalMutex);
-        }       
-    };
-#else
-   //Piece of Win32 code contributed by Torsten Schröder
-   namespace detail
-   {
-     class init_guard {
-        static CRITICAL_SECTION mGlobalMutex; 
-       public:
-        init_guard() {
-          InitializeCriticalSection(&mGlobalMutex);
-        }
-        ~init_guard() {
-          DeleteCriticalSection(&mGlobalMutex);
-        }       
-        CRITICAL_SECTION * operator()() { 
-          return &mGlobalMutex; 
-        }
-        const CRITICAL_SECTION * operator()() const { 
-          return &mGlobalMutex; 
-        }
-     };
-  } 
-  class guard {
-      static detail::init_guard mGlobalMutex; 
-    public:
-      guard() {
-        EnterCriticalSection(mGlobalMutex());
-      }
-      ~guard() {
-        LeaveCriticalSection(mGlobalMutex());
-      }       
-  };
-#endif
-#endif
-    template <typename T>
-    class guard_if_needed {};
-    template <>
-    class guard_if_needed <MULTI> {
-        guard mGuard;      
-       public:
-        guard_if_needed():mGuard(){}
-    };
-  }
-  //A list of log levels as simple classes.
-  namespace severity {
-    enum Severity {// Numerical codes are from RFC-5424
-        EMERG=0, ALERT=1, CRIT=2, ERR=3, WARNING=4, NOTICE=5, INFO=6, DEBUG=7
-    };
-    template<Severity,typename C> inline std::basic_string<C> asPrefix();
-    template<> inline std::basic_string<char> asPrefix<EMERG,char>(){ return "EMERG"; }
-    template<> inline std::basic_string<char> asPrefix<ALERT,char>(){ return "ALERT"; }
-    template<> inline std::basic_string<char> asPrefix<CRIT,char>(){ return "CRIT"; }
-    template<> inline std::basic_string<char> asPrefix<ERR,char>(){ return "ERR"; }
-    template<> inline std::basic_string<char> asPrefix<WARNING,char>(){ return "WARNING"; }
-    template<> inline std::basic_string<char> asPrefix<NOTICE,char>(){ return "NOTICE"; }
-    template<> inline std::basic_string<char> asPrefix<INFO,char>(){ return "INFO"; }
-    template<> inline std::basic_string<char> asPrefix<DEBUG,char>(){ return "DEBUG"; }
-    template<> inline std::basic_string<wchar_t> asPrefix<EMERG,wchar_t>(){ return L"EMERG"; }
-    template<> inline std::basic_string<wchar_t> asPrefix<ALERT,wchar_t>(){ return L"ALERT"; }
-    template<> inline std::basic_string<wchar_t> asPrefix<CRIT,wchar_t>(){ return L"CRIT"; }
-    template<> inline std::basic_string<wchar_t> asPrefix<ERR,wchar_t>(){ return L"ERR"; }
-    template<> inline std::basic_string<wchar_t> asPrefix<WARNING,wchar_t>(){ return L"WARNING"; }
-    template<> inline std::basic_string<wchar_t> asPrefix<NOTICE,wchar_t>(){ return L"NOTICE"; }
-    template<> inline std::basic_string<wchar_t> asPrefix<INFO,wchar_t>(){ return L"INFO"; }
-    template<> inline std::basic_string<wchar_t> asPrefix<DEBUG,wchar_t>(){ return L"DEBUG"; }
-  }
-  //Some raw loggers, well one actually, currently.There is only a syslog raw logger now but we could add a stream logger here maybe.
-  namespace rawlogger {
-#ifndef WIN32
-    template <typename F,typename G,typename C=char>
-    class sysloglogger;
-    template <typename F,typename G>
-    class sysloglogger<F,G,char> {
-        std::basic_string<char> mIdent;
-        util::CharUtil<char> charutil;
-      public:
-        sysloglogger(std::basic_string<char> ident):mIdent(ident),charutil() {
-          openlog(mIdent.c_str(),LOG_PID, F::asSyslogFacility());    
-        } 
-        ~sysloglogger() {
-           closelog();
-        }
-
-        template <severity::Severity S>
-        void log(std::basic_string<char> line) {
-           threading::guard_if_needed<G> myguard;
-           syslog(S,"%s",(severity::asPrefix<S,char>() + charutil.sp_col_sp() + line).c_str());
-        }
-    };
-#endif
-    template <typename G, typename C>
-    class ostreamlogger {
-        std::basic_ostream<C> &mStream;
-        util::CharUtil<C> charutil;
-      public:
-        ostreamlogger(std::basic_ostream<C> &stream):mStream(stream),charutil() {}
-        template <severity::Severity S>
-        void log(std::basic_string<C> line) {
-           threading::guard_if_needed<G> myguard;
-           mStream << charutil.now() << charutil.sp_col_sp() << severity::asPrefix<S,C>() << charutil.sp_col_sp() << line;
-        }
-    };
-  }
   template <typename L,typename C,typename traits=std::char_traits<C> >
   class nullstreambuf : public std::basic_streambuf<C,traits > {
       public:
@@ -307,7 +87,7 @@ namespace kisslog {
   //To give the logging lib a friendly API, we define a common abstract basecalass for all loggers.
   //This should allow passing a logger reference to the constructor of client classes without hooking those
   //client classes into our template hyrarchy.
-  template <typename C>
+  template <typename C=char>
   struct logger_base {
      virtual std::basic_ostream<C> &debug()=0;
      virtual std::basic_ostream<C> &info()=0;

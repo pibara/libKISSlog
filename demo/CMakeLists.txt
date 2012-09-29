@@ -11,17 +11,17 @@ endif()
 
 include_directories("../")
 
-add_executable(customdemo customdemo.cpp ../kisslog-mt-static.cpp)
+add_executable(customdemo customdemo.cpp ../src/kisslog-mt-static.cpp)
 add_test(customdemo customdemo)
 
-add_executable(wchar_custdemo wchar_custdemo.cpp ../kisslog-mt-static.cpp)
+add_executable(wchar_custdemo wchar_custdemo.cpp ../src/kisslog-mt-static.cpp)
 SET_SOURCE_FILES_PROPERTIES(wchar_custdemo.cpp PROPERTIES COMPILE_FLAGS -DKISSLOG_USE_WIDE)
 add_test(wchar_custdemo wchar_custdemo)
 
-add_executable(streamdemo streamdemo.cpp ../kisslog-mt-static.cpp)
+add_executable(streamdemo streamdemo.cpp ../src/kisslog-mt-static.cpp)
 add_test(streamdemo streamdemo)
 
 if(NOT WIN32)
-    add_executable(syslogdemo syslogdemo.cpp ../kisslog-mt-static.cpp)
+    add_executable(syslogdemo syslogdemo.cpp ../src/kisslog-mt-static.cpp)
     add_test(syslogdemo syslogdemo)
 endif()

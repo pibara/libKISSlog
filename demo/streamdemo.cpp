@@ -22,14 +22,14 @@ class Bar {
     }
 };
 
-typedef kisslog::rawlogger::ostreamlogger<kisslog::threading::MULTI,char> ostreamrawlogger;
-typedef kisslog::logger<ostreamrawlogger,kisslog::severity::WARNING,char> warnlogger;
-typedef kisslog::logger<ostreamrawlogger,kisslog::severity::DEBUG,char> debuglogger;
+typedef kisslog::rawlogger::ostreamlogger<kisslog::threading::MULTI> rawlogger_t;
+typedef kisslog::logger<rawlogger_t> warnlogger_t;
+typedef kisslog::logger<rawlogger_t,kisslog::severity::DEBUG> debuglogger_t;
 
 int main(int argc,char **argv) {
-  ostreamrawlogger rlogger(std::cerr);
-  warnlogger foologger(rlogger);
-  debuglogger barlogger(rlogger);
+  rawlogger_t rlogger(std::cerr);
+  warnlogger_t foologger(rlogger);
+  debuglogger_t barlogger(rlogger);
   Foo foo(foologger);
   Bar bar(barlogger);
   foo.testlog();
