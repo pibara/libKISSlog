@@ -29,6 +29,7 @@
 #include <kisslog/concurrency.hpp>
 #include <kisslog/severity.hpp>
 #include <kisslog/rawlogger.hpp>
+#include <kisslog/proto.hpp>
 #include <string>
 #include <streambuf>
 #include <iostream>

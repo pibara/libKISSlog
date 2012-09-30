@@ -36,11 +36,14 @@ namespace kisslog {
     struct CharUtil<char> {
       std::char_traits<char>::int_type newline() { return '\n';}
       std::basic_string<char> sp_col_sp() { return " : "; }
+      std::basic_string<char> iso_now() {
+          time_t ctt = time(0);
+          char mbstr[100];
+          std::strftime(mbstr, 100, "%FT%TZ", std::localtime(&ctt));
+          return mbstr;
+      };
       std::basic_string<char> now() {
-         time_t ctt = time(0);
-         std::basic_string<char> timestring=asctime(localtime(&ctt));
-         timestring=timestring.substr(0,timestring.size()-1);
-         return timestring;
+          return this->iso_now();
       }
     };
     template <>

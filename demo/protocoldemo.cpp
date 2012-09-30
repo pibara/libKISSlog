@@ -1,19 +1,6 @@
 #include <kisslog.hpp>
-
-class rawlogger_t {
-    size_t mLineno;
-    kisslog::util::CharUtil<char> mCharUtil;
-   public:
-    rawlogger_t():mLineno(0),mCharUtil(){}
-    size_t logcount() {
-       return mLineno;
-    }
-    template <kisslog::severity::Severity S>
-    void log(std::string line) {
-           mLineno++;
-           std::cerr << mLineno << " : " << kisslog::severity::asPrefix<S,char>() << " : " << line;
-    }
-};
+#include <sys/types.h>
+#include <unistd.h>
 
 class Foo {
     kisslog::logger_base<> &mLogger;
@@ -36,20 +23,23 @@ class Bar {
         mLogger.crit() << "Bar is in big problems." << std::endl;
     }
 };
-
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
+typedef kisslog::rawlogger::syslogprotologger<kisslog::proto::cerr,kisslog::facility::USER> rawlogger_t;
 typedef kisslog::logger<rawlogger_t> warnlogger_t;
 typedef kisslog::logger<rawlogger_t,kisslog::severity::DEBUG> debuglogger_t;
+#else
+#error Logging to syslog protocols currently only supported for C++11.
+#endif
 
 int main(int argc,char **argv) {
-  rawlogger_t rlogger;
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
+  kisslog::proto::cerr protocol;
+  rawlogger_t rlogger(protocol,"localhost","kisslogdemo",std::to_string(getpid()));
   warnlogger_t foologger(rlogger);
   debuglogger_t barlogger(rlogger);
   Foo foo(foologger);
   Bar bar(barlogger);
   foo.testlog();
   bar.testlog();
-  if (rlogger.logcount() !=4) {
-    return 1;
-  } 
-  return 0;
+#endif
 };

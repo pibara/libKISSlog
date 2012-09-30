@@ -1,4 +1,3 @@
-//WARNING: This file is work in progress, don't use yet.
 //  Copyright (c) 2012, Rob J Meijer
 //
 //
@@ -24,33 +23,20 @@
 //ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //DEALINGS IN THE SOFTWARE.
 
-#ifndef KISSLOG_SYSLOGPROTOLOGGER_HPP
-#define KISSLOG_SYSLOGPROTOLOGGER_HPP
-#include <kisslog/facility.hpp>
-#include <kisslog/severity.hpp>
+#ifndef KISSLOG_CERRPROTO_HPP
+#define KISSLOG_CERRPROTO_HPP
 #include <kisslog/util.hpp>
+#include <kisslog/severity.hpp>
 #include <kisslog/concurrency.hpp>
-#include <syslog.h>
 #include <string>
-
+#include <iostream>
 
 namespace kisslog {
-  namespace rawlogger {
-    template <typename TransportProtoType,typename FacilityType>
-    class syslogprotologger {
-        TransportProtoType &mProto;
-        int mBasePrio;
-        std::string mProtoLinePrefix;
-        util::CharUtil<char> charutil;
+  namespace proto {
+    class cerr {
       public:
-        syslogprotologger(TransportProtoType &proto,std::string hostname,std::string appname,std::string pid):
-                 mProto(proto),
-                 mBasePrio(FacilityType::asSyslogFacility()*8),
-                 mProtoLinePrefix(std::string(" ") + hostname + " " + appname + " " + pid + " - - "),
-                 charutil() {} 
-        template <severity::Severity SeverityVal>
-        void log(std::string line) {
-           mProto(std::string("<") + std::to_string(mBasePrio + SeverityVal) + ">1 " + charutil.iso_now() + mProtoLinePrefix + line);
+        void operator()(std::string msg) {
+          std::cerr << msg;
         }
     };
   }
