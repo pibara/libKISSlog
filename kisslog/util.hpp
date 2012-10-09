@@ -45,13 +45,42 @@ namespace kisslog {
       std::basic_string<char> now() {
           return this->iso_now();
       }
+      //The content for char strings is ambiguous, but it does not hurt to try and not break utf8 characters in the middle  if its happens to be the content.
+      size_t max_char_len() {
+         return 4;
+      }
+      bool can_truncate(char *data,size_t len){ 
+         char c2=data[len-1];
+         if (c2 < 128) {
+            return true;
+         }
+         char c1=data[len-2];
+         if ((c2 > 191)||(c1 > 223)) {
+            return false;
+         }
+         if ((c1 > 191)||(c1 < 128)) {
+           return true;
+         }
+         char c0=data[len-3];
+         if (c0 > 239) {
+           return false;
+         }
+         return true;
+      } 
     };
     template <>
     struct CharUtil<wchar_t> {
       std::char_traits<wchar_t>::int_type newline() { return L'\n';}
       std::basic_string<wchar_t> sp_col_sp() { return L" : "; }
+      size_t max_char_len() {
+         return 1;
+      }
       //FIXME: we need a wchar_t 'now()' definition also!.
     };
+//    template <>
+//    struct CharUtil<char16_t> {
+//        
+//    };
   }
 }
 #endif
