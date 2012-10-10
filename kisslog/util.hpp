@@ -77,10 +77,20 @@ namespace kisslog {
       }
       //FIXME: we need a wchar_t 'now()' definition also!.
     };
-//    template <>
-//    struct CharUtil<char16_t> {
-//        
-//    };
+    #if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
+    template <>
+    struct CharUtil<char16_t> {
+       std::char_traits<char16_t>::int_type newline() { return u'\n';}
+       std::basic_string<char16_t> sp_col_sp() { return u" : "; }  
+       size_t max_char_len() {
+         return 2;
+       }
+       bool can_truncate(char16_t *data,size_t len){
+         //FIXME
+         return true;
+       }
+    };
+    #endif
   }
 }
 #endif
