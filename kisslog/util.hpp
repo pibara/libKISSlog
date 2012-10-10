@@ -45,24 +45,23 @@ namespace kisslog {
       std::basic_string<char> now() {
           return this->iso_now();
       }
-      //The content for char strings is ambiguous, but it does not hurt to try and not break utf8 characters in the middle  if its happens to be the content.
       size_t max_char_len() {
          return 4;
       }
-      bool can_truncate(char *data,size_t len){ 
-         char c2=data[len-1];
-         if (c2 < 128) {
+      bool can_truncate(char *data){ 
+         char c2=data[2];
+         if ((c2 & 0x80) == 0) {
             return true;
          }
-         char c1=data[len-2];
-         if ((c2 > 191)||(c1 > 223)) {
+         char c1=data[1];
+         if (((c2 & 0xc0) == 0xc0) || ((c1 & 0xe0) == 0xe0)) {
             return false;
          }
-         if ((c1 > 191)||(c1 < 128)) {
+         if (((c1 & 0xc0) == 0xc0) || ((c1 & 0x80) == 0)) {
            return true;
          }
-         char c0=data[len-3];
-         if (c0 > 239) {
+         char c0=data[0];
+         if ((c0 & 0xf0) == 0xf0) {
            return false;
          }
          return true;
@@ -70,23 +69,74 @@ namespace kisslog {
     };
     template <>
     struct CharUtil<wchar_t> {
+     private:
+      CharUtil<char> mBaseCharUtil;
+     public:
       std::char_traits<wchar_t>::int_type newline() { return L'\n';}
       std::basic_string<wchar_t> sp_col_sp() { return L" : "; }
       size_t max_char_len() {
          return 1;
       }
-      //FIXME: we need a wchar_t 'now()' definition also!.
+      bool can_truncate(wchar_t *data){
+         return true;
+       }
+      std::basic_string<wchar_t> iso_now() {
+          std::string nowstring=mBaseCharUtil.now();
+          std::wstring ws;
+          ws.assign(nowstring.begin(), nowstring.end());
+          return ws;
+       };
+      std::basic_string<wchar_t> now() {
+          return this->iso_now();
+      }
     };
     #if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
     template <>
     struct CharUtil<char16_t> {
+      private:
+       CharUtil<char> mBaseCharUtil;
+      public:
        std::char_traits<char16_t>::int_type newline() { return u'\n';}
        std::basic_string<char16_t> sp_col_sp() { return u" : "; }  
+       std::basic_string<char16_t> iso_now() {
+          std::string nowstring=mBaseCharUtil.now();
+          std::basic_string<char16_t> ws;
+          ws.assign(nowstring.begin(), nowstring.end());
+          return ws;
+       };
+       std::basic_string<char16_t> now() {
+          return this->iso_now();
+       }
        size_t max_char_len() {
          return 2;
        }
-       bool can_truncate(char16_t *data,size_t len){
-         //FIXME
+       bool can_truncate(char16_t *data){
+         if ((data[0] & 0xd800) == 0xd800) {
+            return false;
+         }
+         return true;
+       }
+    };
+    template <>
+    struct CharUtil<char32_t> {
+      private:
+       CharUtil<char> mBaseCharUtil;
+      public:
+       std::char_traits<char32_t>::int_type newline() { return U'\n';}
+       std::basic_string<char32_t> sp_col_sp() { return U" : "; }
+       std::basic_string<char32_t> iso_now() {
+          std::string nowstring=mBaseCharUtil.now();
+          std::basic_string<char32_t> ws;
+          ws.assign(nowstring.begin(), nowstring.end());
+          return ws;
+       };
+       std::basic_string<char32_t> now() {
+          return this->iso_now();
+       }
+       size_t max_char_len() {
+         return 1;
+       }
+       bool can_truncate(char16_t *data){
          return true;
        }
     };

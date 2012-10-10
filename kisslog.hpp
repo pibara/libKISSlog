@@ -47,7 +47,7 @@ namespace kisslog {
   template <typename RawloggerType,severity::Severity SeverityVal,typename CharType,typename traits=std::char_traits<CharType> >
   class logstreambuf : public std::basic_streambuf<CharType,traits> {
       RawloggerType &mLogger;
-      CharType data[256];
+      CharType data[256+3];
       size_t index;
       util::CharUtil<CharType> charutil;
     public:
@@ -64,7 +64,8 @@ namespace kisslog {
           index++;
         }
         if ((c == charutil.newline()) || 
-            (index == 255) || 
+            (index == 258) ||
+            ((index > 254) && (charutil.can_truncate(data+index-3))) || //expirimental unicode protection stuff.
             (c == traits::eof())) {
           data[index]=0;
           mLogger.template log<SeverityVal>(std::basic_string<CharType,traits>(data));
