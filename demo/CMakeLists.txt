@@ -21,6 +21,9 @@ add_test(wchar_custdemo wchar_custdemo)
 add_executable(streamdemo streamdemo.cpp ../src/kisslog-mt-static.cpp)
 add_test(streamdemo streamdemo)
 
+add_executable(wchar_streamdemo wchar_streamdemo.cpp ../src/kisslog-mt-static.cpp)
+add_test(wchar_streamdemo wchar_streamdemo)
+
 if(NOT WIN32)
     add_executable(syslogdemo syslogdemo.cpp ../src/kisslog-mt-static.cpp)
     add_test(syslogdemo syslogdemo)
