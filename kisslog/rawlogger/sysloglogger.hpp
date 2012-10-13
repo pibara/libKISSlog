@@ -31,11 +31,15 @@
 #include <kisslog/concurrency.hpp>
 #include <syslog.h>
 #include <string>
+#include <locale>
 
 namespace kisslog {
   namespace rawlogger {
+    template <typename FacilityType,typename GuardNeededType,typename CharType=char>
+    class sysloglogger;
+
     template <typename FacilityType,typename GuardNeededType>
-    class sysloglogger {
+    class sysloglogger<FacilityType,GuardNeededType,char> {
         std::basic_string<char> mIdent;
         util::CharUtil<char> charutil;
       public:
@@ -52,6 +56,33 @@ namespace kisslog {
            syslog(SeverityVal,"%s",(severity::asPrefix<SeverityVal,char>() + charutil.sp_col_sp() + line).c_str());
         }
     };
+#ifdef USE_HIGHLY_EXPERIMENTAL_KISSLOG_CODE //Where did std::wstring_convert go? FIXME
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
+    template <typename FacilityType,typename GuardNeededType>
+    class sysloglogger<FacilityType,GuardNeededType,char16_t> {
+       std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> mConvert;
+       sysloglogger<FacilityType,GuardNeededType,char> mCharLogger;
+      public:
+       sysloglogger(std::basic_string<char16_t> ident):mConvert(),mCharLogger(mConvert.to_bytes(ident)) {}
+       template <severity::Severity SeverityVal>
+       void log(std::u16string line) {
+          mCharLogger.log<SeverityVal>(mConvert.to_bytes(line));
+       }
+    };
+
+    template <typename FacilityType,typename GuardNeededType>
+    class sysloglogger<FacilityType,GuardNeededType,char32_t> {
+       std::wstring_convert<std::codecvt_utf8<char32_t>,char32_t> mConvert;
+       sysloglogger<FacilityType,GuardNeededType,char> mCharLogger;
+      public:
+       sysloglogger(std::basic_string<char32_t> ident):mConvert(),mCharLogger(mConvert.to_bytes(ident)) {}
+       template <severity::Severity SeverityVal>
+       void log(std::u16string line) {
+          mCharLogger.log<SeverityVal>(mConvert.to_bytes(line));
+       }
+    };
+#endif
+#endif
   }
 }
 #endif
