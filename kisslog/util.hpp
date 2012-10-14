@@ -39,7 +39,7 @@ namespace kisslog {
       std::basic_string<char> iso_now() {
           time_t ctt = time(0);
           char mbstr[100];
-          std::strftime(mbstr, 100, "%FT%TZ", std::localtime(&ctt));
+          std::strftime(mbstr, 100, "%Y-%m-%dT%H:%M:%SZ", std::localtime(&ctt));
           return mbstr;
       };
       std::basic_string<char> now() {
